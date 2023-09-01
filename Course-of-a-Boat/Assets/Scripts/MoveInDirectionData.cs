@@ -58,7 +58,6 @@ partial struct PushInDirectionSystem : ISystem
         {
             // Setup
             ref var pushInDirection = ref pushInDirectionRef.ValueRW;
-            ref var trs = ref trsRef.ValueRW;
             var forward = math.forward().xz;
             var right = math.right().xz;
             var acceleration = float2.zero;
@@ -80,7 +79,7 @@ partial struct PushInDirectionSystem : ISystem
             pushInDirection.force = math.clamp(pushInDirection.force, -pushInDirection.maxForce, pushInDirection.maxForce);
             pushInDirection.force *= 1.0f - pushInDirection.drag*SystemAPI.Time.DeltaTime;
             
-            trs.Position.xz += pushInDirection.force;
+            trsRef.ValueRW.Position.xz += pushInDirection.force;
         }
     }
 }
