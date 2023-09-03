@@ -2,7 +2,6 @@
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class MovNSEWAuthoring : MonoBehaviour
 {
@@ -24,10 +23,12 @@ public class MovNSEWAuthoring : MonoBehaviour
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new PushInDirection
             {
-                accelerationToSet = authoring.accelerationToSetInDirection,
                 maxForce = authoring.maxForce,
-                drag = authoring.drag,
-                
+                drag = authoring.drag
+            });
+            AddComponent(entity, new MoveNSWEData
+            {    
+                accelerationToSet = authoring.accelerationToSetInDirection,
                 north = authoring.north,
                 south = authoring.south,
                 east = authoring.east,
@@ -39,15 +40,57 @@ public class MovNSEWAuthoring : MonoBehaviour
 
 public struct PushInDirection : IComponentData
 {
-    public float accelerationToSet;
+    // Settings
     public float maxForce;
-    public float2 force;
     public float drag;
+
+    // Runtime Only
+    public float2 force;
+    public float2 accelerationXZ;
     
+}
+
+struct MoveNSWEData : IComponentData
+{
+    // Settings
+    public float accelerationToSet;
+    
+    // Key Bindings
     public KeyCode north;
     public KeyCode south;
     public KeyCode east;
     public KeyCode west;
+}
+
+[UpdateBefore(typeof(PushInDirectionSystem))]
+partial struct MoveNSWESystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (pushInDirectionRef, settingsRef) in SystemAPI.Query<RefRW<PushInDirection>, RefRO<MoveNSWEData>>())
+        {
+            var settings = settingsRef.ValueRO;
+            
+            // Setup
+            var forward = math.forward().xz;
+            var right = math.right().xz;
+            var acceleration = float2.zero;
+            
+            // Vertical
+            if (Input.GetKey(settings.north))
+                acceleration += forward * settings.accelerationToSet;
+            if (Input.GetKey(settings.south))
+                acceleration -= forward * settings.accelerationToSet;
+            
+            // Horizontal
+            if (Input.GetKey(settings.east))
+                acceleration += right * settings.accelerationToSet;
+            if (Input.GetKey(settings.west))
+                acceleration -= right * settings.accelerationToSet;
+            
+            pushInDirectionRef.ValueRW.accelerationXZ = acceleration;
+        }
+    }
 }
 
 partial struct PushInDirectionSystem : ISystem
@@ -58,24 +101,9 @@ partial struct PushInDirectionSystem : ISystem
         {
             // Setup
             ref var pushInDirection = ref pushInDirectionRef.ValueRW;
-            var forward = math.forward().xz;
-            var right = math.right().xz;
-            var acceleration = float2.zero;
-            
-            // Vertical
-            if (Input.GetKey(pushInDirection.north))
-                acceleration += forward * pushInDirection.accelerationToSet;
-            if (Input.GetKey(pushInDirection.south))
-                acceleration -= forward * pushInDirection.accelerationToSet;
-            
-            // Horizontal
-            if (Input.GetKey(pushInDirection.east))
-                acceleration += right * pushInDirection.accelerationToSet;
-            if (Input.GetKey(pushInDirection.west))
-                acceleration -= right * pushInDirection.accelerationToSet;
-            
+
             // Apply
-            pushInDirection.force += acceleration*SystemAPI.Time.DeltaTime;
+            pushInDirection.force += pushInDirection.accelerationXZ*SystemAPI.Time.DeltaTime;
             pushInDirection.force = math.clamp(pushInDirection.force, -pushInDirection.maxForce, pushInDirection.maxForce);
             pushInDirection.force *= 1.0f - pushInDirection.drag*SystemAPI.Time.DeltaTime;
             
