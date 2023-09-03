@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -39,12 +40,13 @@ partial struct MoveToMarkerSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<PushInDirection>();
+        state.RequireForUpdate<MarkerTag>();
     }
 
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var marker = SystemAPI.GetSingletonEntity<PushInDirection>();
+        var marker = SystemAPI.GetSingletonEntity<MarkerTag>();
         var markerLT = SystemAPI.GetComponent<LocalTransform>(marker);
 
         foreach (var (velocityRef, ltRef, massRef, followRef) in SystemAPI.Query<RefRW<PhysicsVelocity>, RefRO<LocalTransform>, RefRO<PhysicsMass>, RefRO<FollowMarkerData>>())

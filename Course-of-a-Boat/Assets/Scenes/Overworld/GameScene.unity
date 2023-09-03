@@ -170,6 +170,19 @@ MonoBehaviour:
   south: 115
   east: 100
   west: 97
+--- !u!114 &79195755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 79195746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 334ab8c98c6a40bfae9e328bc3303052, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tagType: 1
 --- !u!1 &86950055
 GameObject:
   m_ObjectHideFlags: 0
@@ -456,6 +469,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 79195751}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 74f36ccba02d404489528f1a2e86af98,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 79195755}
   m_SourcePrefab: {fileID: 100100000, guid: 74f36ccba02d404489528f1a2e86af98, type: 3}
 --- !u!1001 &317495683
 PrefabInstance:
