@@ -1,9 +1,24 @@
 fileFormatVersion: 2
-guid: 91c838417438980458113e1ca654db1b
+guid: 7e7fe52f2b629a64fa604e26481d8a2b
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: rock
+    second: {fileID: 2100000, guid: af046ca6ac06ab841a24e4b5c9189b9c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wood
+    second: {fileID: 2100000, guid: 4306601abd609b340b5f719aa716f8b3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: woodDark
+    second: {fileID: 2100000, guid: 0daf768d83dc2af46bb34adf5959641b, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

@@ -1,11 +1,11 @@
 ## Kenney
 All assets in this folder is made by the wonderful Kenney! 
 
-Find him at:
-[Twitter](https://twitter.com/KenneyNL)
-[Mastadon](https://mastodon.gamedev.place/@kenney)
-[Instagram](https://www.instagram.com/kenney_nl/)
-[Newsletter](https://sendfox.com/kenney)
+Find him on 
+[Twitter](https://twitter.com/KenneyNL), 
+[Mastadon](https://mastodon.gamedev.place/@kenney), 
+[Instagram](https://www.instagram.com/kenney_nl/), 
+or his [Newsletter](https://sendfox.com/kenney)
 
 Show him love here:
 https://www.kenney.nl/donate
@@ -16,7 +16,7 @@ He also makes really cool software! Like:
 - [And more](https://www.kenney.nl/tools)!
 
 The source of all assets can be found here:
-https://www.kenney.nl/assets/survival-kit
-https://www.kenney.nl/assets/hexagon-kit
-https://www.kenney.nl/assets/pirate-kit
-https://www.kenney.nl/assets/watercraft-pack
+- https://www.kenney.nl/assets/survival-kit (size 2x)
+- https://www.kenney.nl/assets/hexagon-kit (size 5x)
+- https://www.kenney.nl/assets/pirate-kit (size 0.2x)
+- https://www.kenney.nl/assets/watercraft-pack (size 1x)

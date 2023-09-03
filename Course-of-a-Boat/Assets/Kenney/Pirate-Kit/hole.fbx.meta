@@ -1,9 +1,19 @@
 fileFormatVersion: 2
-guid: 3027578195bad9740afc68dbb43378cf
+guid: 12b624d419ddec342ba90262b09a6ee8
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: iron
+    second: {fileID: 2100000, guid: 645fff19b4e9dde44a1c865939b47af3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: sand
+    second: {fileID: 2100000, guid: 75d29c4301573be4cbc75cb220e39c2f, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
