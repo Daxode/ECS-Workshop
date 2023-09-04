@@ -1,3 +1,5 @@
+using Runtime;
+using Unity.Entities;
 using UnityEngine;
 
 public class MoveUpAndDownAuthor : MonoBehaviour
@@ -9,4 +11,19 @@ public class MoveUpAndDownAuthor : MonoBehaviour
     
     [Header("Extra Settings")]
     public bool addGameObjectYToOffset = true;
+
+    public class MoveUpAndDownBaker : Baker<MoveUpAndDownAuthor>
+    {
+        public override void Bake(MoveUpAndDownAuthor authoring)
+        {
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            var data = new MoveUpAndDown
+            {
+                speed = authoring.speed,
+                amplitude = authoring.amplitude,
+                offset = authoring.offset + (authoring.addGameObjectYToOffset ? authoring.transform.localPosition.y : 0f)
+            };
+            AddComponent(entity, data);
+        }
+    }
 }

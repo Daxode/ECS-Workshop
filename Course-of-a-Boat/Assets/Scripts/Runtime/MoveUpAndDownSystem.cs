@@ -15,27 +15,6 @@ namespace Runtime
     partial struct MoveUpAndDownSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state)
-        {
-            var e = state.EntityManager.CreateEntity();
-            state.EntityManager.AddComponentData(e, new MoveUpAndDown
-            {
-                speed = 1.0f,
-                amplitude = 0.2f,
-                offset = 0.0f
-            });
-            state.EntityManager.AddComponent<LocalTransform>(e);
-            
-            var e2 = state.EntityManager.CreateEntity();
-            state.EntityManager.AddComponentData(e2, new MoveUpAndDown
-            {
-                speed = 1.0f,
-                amplitude = 0.2f,
-                offset = 0.0f
-            });
-        }
-
-        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var i = 0;
