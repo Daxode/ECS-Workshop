@@ -21,7 +21,7 @@ public class MoveUpAndDownAuthor : MonoBehaviour
             {
                 speed = authoring.speed,
                 amplitude = authoring.amplitude,
-                offset = authoring.offset + (authoring.addGameObjectYToOffset ? authoring.transform.localPosition.y : 0f)
+                offset = authoring.offset + (authoring.addGameObjectYToOffset ? authoring.transform.position.y : 0f)
             };
             AddComponent(entity, data);
         }
