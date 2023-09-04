@@ -1,5 +1,6 @@
 ﻿using Unity.Burst;
 using Unity.Entities;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace Runtime
@@ -13,6 +14,7 @@ namespace Runtime
     public struct BoatShopItemElement : IBufferElementData
     {
         public int price;
+        public Entity boatPrefab;
     }
     
     public partial struct BuyingSystem : ISystem
@@ -20,7 +22,7 @@ namespace Runtime
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            foreach (var (buyingStation, boatShopItems) in SystemAPI.Query<RefRW<BuyingStationData>, DynamicBuffer<BoatShopItemElement>>())
+            foreach (var (buyingStation, boatShopItems, ltw) in SystemAPI.Query<RefRW<BuyingStationData>, DynamicBuffer<BoatShopItemElement>, RefRO<LocalToWorld>>())
             {
                 // store which number is pressed
                 for (var key = KeyCode.Alpha0; key <= KeyCode.Alpha9; key++)
@@ -49,6 +51,8 @@ namespace Runtime
                     var selectedBoat = boatShopItems[buyingStation.ValueRO.selectedBoat];
                     buyingStation.ValueRW.money -= selectedBoat.price;
                     Debug.Log($"Bought boat {buyingStation.ValueRO.selectedBoat}, price: {selectedBoat.price}");
+                    var boat = state.EntityManager.Instantiate(selectedBoat.boatPrefab);
+                    SystemAPI.SetComponent(boat, LocalTransform.FromMatrix(ltw.ValueRO.Value));
                 }
             }
         }

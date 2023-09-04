@@ -26,7 +26,14 @@ public class BuyingStationAuthor : MonoBehaviour
             
             var boatItems = AddBuffer<BoatShopItemElement>(harbour);
             foreach (var boatItem in authoring.boats)
-                boatItems.Add(new BoatShopItemElement { price = boatItem.price });
+            {
+                var boatPrefab = GetEntity(boatItem.boat, TransformUsageFlags.Dynamic);
+                boatItems.Add(new BoatShopItemElement
+                {
+                    price = boatItem.price,
+                    boatPrefab = boatPrefab
+                });
+            }
         }
     }
 }
