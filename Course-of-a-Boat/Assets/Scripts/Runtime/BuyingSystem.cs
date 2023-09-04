@@ -18,22 +18,6 @@ namespace Runtime
     public partial struct BuyingSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state)
-        {
-            var harbour = state.EntityManager.CreateEntity();
-            state.EntityManager.AddComponentData(harbour, new BuyingStationData
-            {
-                money = 0,
-                selectedBoat = -1
-            });
-            
-            var boatItems = state.EntityManager.AddBuffer<BoatShopItemElement>(harbour);
-            boatItems.Add(new BoatShopItemElement { price = 5 });
-            boatItems.Add(new BoatShopItemElement { price = 10 });
-            boatItems.Add(new BoatShopItemElement { price = 15 });
-        }
-
-        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             foreach (var (buyingStation, boatShopItems) in SystemAPI.Query<RefRW<BuyingStationData>, DynamicBuffer<BoatShopItemElement>>())

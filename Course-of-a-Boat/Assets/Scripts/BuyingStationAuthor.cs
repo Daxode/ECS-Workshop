@@ -1,4 +1,6 @@
 ﻿using System;
+using Runtime;
+using Unity.Entities;
 using UnityEngine;
 
 public class BuyingStationAuthor : MonoBehaviour
@@ -11,4 +13,20 @@ public class BuyingStationAuthor : MonoBehaviour
     }
 
     public BoatItem[] boats;
+    
+    public class BuyingStationBaker : Baker<BuyingStationAuthor>
+    {
+        public override void Bake(BuyingStationAuthor authoring)
+        {
+            var harbour = GetEntity(TransformUsageFlags.Renderable);
+            AddComponent(harbour, new BuyingStationData
+            {
+                selectedBoat = -1
+            });
+            
+            var boatItems = AddBuffer<BoatShopItemElement>(harbour);
+            foreach (var boatItem in authoring.boats)
+                boatItems.Add(new BoatShopItemElement { price = boatItem.price });
+        }
+    }
 }
