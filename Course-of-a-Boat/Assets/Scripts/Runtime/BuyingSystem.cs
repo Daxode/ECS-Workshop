@@ -17,8 +17,24 @@ namespace Runtime
         public Entity boatPrefab;
     }
     
-    public partial struct BuyingSystem : ISystem
+    public partial struct BuyingSystem : ISystem, ISystemStartStop
     {
+        public void OnCreate(ref SystemState state)
+        {
+            state.RequireForUpdate<BuyingStationData>();
+        }
+
+        public void OnStartRunning(ref SystemState state)
+        {
+            Debug.Log("BuyingSystem started");
+        }
+
+        public void OnStopRunning(ref SystemState state)
+        {
+            Debug.Log("BuyingSystem stopped");
+        }
+
+        
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
