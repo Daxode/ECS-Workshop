@@ -28,10 +28,12 @@ public class BuyingStationAuthor : MonoBehaviour
             foreach (var boatItem in authoring.boats)
             {
                 var boatPrefab = GetEntity(boatItem.boat, TransformUsageFlags.Dynamic);
+                var previewPrefab = GetEntity(boatItem.boat.PreviewModel, TransformUsageFlags.Renderable);
                 boatItems.Add(new BoatShopItemElement
                 {
                     price = boatItem.price,
-                    boatPrefab = boatPrefab
+                    boatPrefab = boatPrefab,
+                    previewPrefab = previewPrefab
                 });
             }
         }

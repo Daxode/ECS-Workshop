@@ -15,6 +15,9 @@ namespace Runtime
     {
         public int price;
         public Entity boatPrefab;
+        public Entity previewPrefab;
+        
+        public Entity spawnedPreview;
     }
     
     public partial struct BuyingSystem : ISystem, ISystemStartStop
@@ -26,13 +29,20 @@ namespace Runtime
 
         public void OnStartRunning(ref SystemState state)
         {
-            Debug.Log("BuyingSystem started");
+            foreach (var shop in SystemAPI.Query<LocalToWorld, DynamicBuffer<BoatShopItemElement>>())
+            {
+                var ltw = shop.Item1;
+                var boatShopItems = shop.Item2;
+                for (var i = 0; i < boatShopItems.Length; i++)
+                {
+                    var boatShopItem = boatShopItems[i];
+                    boatShopItem.spawnedPreview = state.EntityManager.Instantiate(boatShopItem.previewPrefab);
+                    SystemAPI.SetComponent(boatShopItem.spawnedPreview, LocalTransform.FromMatrix(ltw.Value).WithScale(0));
+                    boatShopItems[i] = boatShopItem;
+                }
+            }
         }
-
-        public void OnStopRunning(ref SystemState state)
-        {
-            Debug.Log("BuyingSystem stopped");
-        }
+        public void OnStopRunning(ref SystemState state) {}
 
         
         [BurstCompile]
@@ -49,11 +59,24 @@ namespace Runtime
                         var index = (int)key - (int)KeyCode.Alpha1;
                         if (index < boatShopItems.Length && index != buyingStation.ValueRO.selectedBoat)
                         {
+                            // hide previous preview
+                            if (buyingStation.ValueRO.selectedBoat >= 0) 
+                            {
+                                var previousPreview = boatShopItems[buyingStation.ValueRO.selectedBoat].spawnedPreview;
+                                var previousLT = SystemAPI.GetComponent<LocalTransform>(previousPreview);
+                                SystemAPI.SetComponent(previousPreview, previousLT.WithScale(0));
+                            }
+                            
                             // select new preview
                             buyingStation.ValueRW.selectedBoat = index;
                             
-                            if (index >= 0)
-                                Debug.Log($"Selected boat {index}, price: {boatShopItems[index].price}");
+                            // show new preview
+                            if (buyingStation.ValueRO.selectedBoat >= 0)
+                            {
+                                var selectedPreview = boatShopItems[buyingStation.ValueRO.selectedBoat].spawnedPreview;
+                                var selectedLT = SystemAPI.GetComponent<LocalTransform>(selectedPreview);
+                                SystemAPI.SetComponent(selectedPreview, selectedLT.WithScale(1));
+                            }
                         }
                         
                         buyingStation.ValueRW.money += 1;
