@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Runtime;
+using Unity.Entities;
+using UnityEngine;
 
 public class MoveNSEWAuthor : MonoBehaviour
 {
@@ -12,4 +14,17 @@ public class MoveNSEWAuthor : MonoBehaviour
     public KeyCode south = KeyCode.S;
     public KeyCode east = KeyCode.D;
     public KeyCode west = KeyCode.A;
+
+    class MoveNSEWAuthorBaker : Baker<MoveNSEWAuthor>
+    {
+        public override void Bake(MoveNSEWAuthor authoring)
+        {
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new PushInDirection
+            {
+                maxForce = authoring.maxForce,
+                drag = authoring.drag,
+            });
+        }
+    }
 }
