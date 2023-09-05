@@ -25,6 +25,15 @@ public class MoveNSEWAuthor : MonoBehaviour
                 maxForce = authoring.maxForce,
                 drag = authoring.drag,
             });
+
+            AddComponent(entity, new MoveNSWEData
+            {
+                accelerationToSet = authoring.accelerationToSetInDirection,
+                north = authoring.north,
+                south = authoring.south,
+                east = authoring.east,
+                west = authoring.west
+            });
         }
     }
 }
