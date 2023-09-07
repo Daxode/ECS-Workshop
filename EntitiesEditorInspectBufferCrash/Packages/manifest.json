@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "com.unity.ide.rider": "3.0.24",
+    "com.unity.entities": "1.0.14",
+    "com.unity.render-pipelines.universal": "14.0.8",
+    "com.unity.modules.uielements": "1.0.0"
+  }
+}
