@@ -1,4 +1,6 @@
-## Presentation.
+## A - Make An Entity
+Let's create our very first entity, I'll do a buying system so we can start buying some boats and selecting them.
+
 First let's mock out the data:
 ![](Resources/A-CodeP1.png)
 
