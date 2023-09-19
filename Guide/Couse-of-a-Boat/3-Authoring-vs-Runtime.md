@@ -1,4 +1,6 @@
-## Presentation.
+## B - Authoring vs Runtime
+Create Entity is fun, but not very designer friendly. Let's fix that with an authoring workflow!
+
 ### Updated ECS Dictionary
 - ***E*ntity:** A key to data in the world
 - ***C*omponent:** The data
