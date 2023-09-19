@@ -7,8 +7,8 @@ Ideally before the workshop you've:
 - Tried opening the project `/Course-of-a-Boat`
   - (this ensures a quick project launch on the day)
 
-## Slides
-After the workshop, slides will, _hopefully_, be posted here in the repository ;)
+## The Workshop
+You can follow along with the markdown version of the slides [here](Guide/Couse-of-a-Boat/1-Intro.md).
 
 ------ 
 That should be it, ***cya there!***
