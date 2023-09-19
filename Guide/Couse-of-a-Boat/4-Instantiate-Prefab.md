@@ -9,14 +9,22 @@ The ECS `Prefab` component is special:
 1. It acts like the ECS `Disabled` component, so all EntityQueries, unless specified otherwise, will exclude this entity implicitly. (You can use `EntityQueryOptions.IncludePrefabs` to include them in the query. For `Disabled` there's `EntityQueryOptions.IncludeDisabledEntities`)
 2. Any `GetEntity` call on a GameObject representing a prefab will implicitly add the `Prefab` component to that entity.
 
+Let's get the Entity with `prefab` on it.
 `Course-of-a-Boat/Assets/Scripts/BuyingStationAuthor.cs`
 ![](Resources/C-CodeP1.png)
 
+Let's copy the prefab entity.
 `Course-of-a-Boat/Assets/Scripts/Runtime/BuyingSystem.cs`
 ![](Resources/C-CodeP2.png)
 
-Since Subscenes are loaded async, you can't be sure that 
+Now for your task, you have to spawn some previews, in the steps:
+- Spawn all previews, with scale zero
+- Scale to 1 upon boat selection
+- Scale to 0 upon boat deselect
 
+You'll run into a problem with step one. You want to create them once, but `OnCreate` is called before the scene is loaded. Reason being, Subscenes are loaded async. To solve it, here are two concepts.
+1. `state.RequireForUpdate` will stop a system from running on update until at ceartin EntityQuery, or singular component exists.
+2. You can implement `ISystemStartStop`, which adds methods that run just before the very first `OnUpdate`, and the first time `OnUpdate` is no longer updated.
 `Course-of-a-Boat/Assets/Scripts/Runtime/BuyingSystem.cs`
 ![](Resources/C-CodeP3.png)
 
@@ -28,7 +36,6 @@ Since Subscenes are loaded async, you can't be sure that
 - `GetEntity` works on prefabs
 
 ---------
-
 ## Task
 - Spawn all previews, with scale zero
 - Scale to 1 upon boat selection
