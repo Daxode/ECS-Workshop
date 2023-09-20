@@ -66,5 +66,5 @@ crashlytics-build.properties
 /Assets/StreamingAssets/
 /Assets/StreamingAssets.meta
 /UserSettings/
-Assets/SceneDependencyCache/
+/Assets/SceneDependencyCache/
 .multitool
