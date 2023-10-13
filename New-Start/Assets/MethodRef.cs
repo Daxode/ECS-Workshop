@@ -1,24 +1,32 @@
 ﻿using System;
-using System.Runtime.InteropServices;
-using Unity.Entities;
+using Unity.Burst;
 using Unity.Serialization;
 using UnityEngine;
+#if ENABLE_IL2CPP
+using System.Runtime.InteropServices;
+#endif
 
 [Serializable]
-public class SerializedMethodData<TDelegate> where TDelegate : Delegate
+public class MethodRef<TDelegate> where TDelegate : Delegate
 {
-    [DontSerialize] IntPtr m_CachedAction; // ready at runtime
+    [DontSerialize] FunctionPointer<TDelegate> m_CachedAction; // ready at runtime
     [SerializeField] UntypedMethodRef untypedMethodRef;
     
-    public TDelegate Get() {
-        if (m_CachedAction == IntPtr.Zero) UpdateCachedAction();
-        if (m_CachedAction == IntPtr.Zero) throw new Exception("Action failed to resolve");
-        return Marshal.GetDelegateForFunctionPointer<TDelegate>(m_CachedAction);
+    public FunctionPointer<TDelegate> Get() {
+        if (!m_CachedAction.IsCreated) UpdateCachedAction();
+        return m_CachedAction;
     }
 
     public void UpdateCachedAction() {
         // get methods with matching name, then pick the one with the right overload index
         var method = untypedMethodRef.TryGet();
-        m_CachedAction = method.MethodHandle.GetFunctionPointer();
+#if ENABLE_IL2CPP
+        var ptr = Marshal.GetFunctionPointerForDelegate(method.CreateDelegate(typeof(TDelegate)));
+#else
+        var ptr = method.MethodHandle.GetFunctionPointer();
+#endif
+        m_CachedAction = new FunctionPointer<TDelegate>(ptr);
+        if (!m_CachedAction.IsCreated)
+            throw new Exception("Action failed to resolve");
     }
 }

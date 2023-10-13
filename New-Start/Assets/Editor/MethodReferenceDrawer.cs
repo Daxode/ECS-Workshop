@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Unity.Burst;
 using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
@@ -45,20 +46,25 @@ internal static class MethodReferenceDrawerUtility {
         // find currently serialized method
         var methodIndexProperty = property.FindPropertyRelative("methodIndex");
         var methodTypeProperty = property.FindPropertyRelative("typeName");
+        var hasBurstCompileAttributeProperty = property.FindPropertyRelative("hasBurstCompileAttribute");
         var currentMethodInfo = UntypedMethodRef.TryGetRaw(methodTypeProperty?.stringValue, methodIndexProperty!.intValue);
+        currentMethodInfo = validMethodsToPick.FirstOrDefault(m => m == currentMethodInfo);
         currentMethodInfo ??= validMethodsToPick[0]; // default to first method if none found
-        currentMethodInfo.TryApplyTo(methodTypeProperty, methodIndexProperty);
+        currentMethodInfo.TryApplyTo(methodTypeProperty, methodIndexProperty, hasBurstCompileAttributeProperty);
         
         // Set up type method picker
         var methodSelectionField = new PopupField<MethodInfo>(nameOverride ?? property.name, validMethodsToPick, currentMethodInfo,
             MethodInfoToNiceName, MethodInfoToNiceName);
         methodSelectionField.RegisterValueChangedCallback(e
-            => e.newValue.TryApplyTo(methodTypeProperty, methodIndexProperty));
+            => e.newValue.TryApplyTo(methodTypeProperty, methodIndexProperty, hasBurstCompileAttributeProperty));
         
         container.Add(methodSelectionField);
     }
 
-    static void TryApplyTo(this MethodInfo methodToSet, SerializedProperty methodTypeProperty, SerializedProperty methodIndexProperty) {
+    static void TryApplyTo(this MethodInfo methodToSet, 
+        SerializedProperty methodTypeProperty, 
+        SerializedProperty methodIndexProperty,
+        SerializedProperty hasBurstCompileAttributeProperty = null) {
         if (methodToSet?.DeclaringType is not {} methodType) return; 
 
         // set type
@@ -70,6 +76,10 @@ internal static class MethodReferenceDrawerUtility {
             var methodsOnType = methodType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
             methodIndexProperty.intValue = Array.IndexOf(methodsOnType, methodToSet);
         }
+        
+        // check if has burst compile attribute
+        if (hasBurstCompileAttributeProperty is not null)
+            hasBurstCompileAttributeProperty.boolValue = methodToSet.GetCustomAttribute<BurstCompileAttribute>() != null;
         
         (methodTypeProperty ?? methodIndexProperty)?.serializedObject.ApplyModifiedProperties();
     }

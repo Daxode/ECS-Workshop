@@ -219,14 +219,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac61bc433afb22843bd2727b5cdb7ec7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  myEventsAsset:
-    untypedMethodRef:
-      typeName: Utilities, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-      methodIndex: 1
-  myNormalAttacks:
-    untypedMethodRef:
-      typeName: Utilities, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-      methodIndex: 0
+  AttackStyles:
+    myEventsAsset:
+      untypedMethodRef:
+        typeName: Utilities, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        methodIndex: 6
+        hasBurstCompileAttribute: 0
+    myNormalAttacks:
+      untypedMethodRef:
+        typeName: Utilities, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        methodIndex: 0
+        hasBurstCompileAttribute: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

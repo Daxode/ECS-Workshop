@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Unity.Entities;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 [Serializable]
 class UntypedMethodRef {
     public string typeName;
     public int methodIndex;
+    public bool hasBurstCompileAttribute;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public MethodInfo TryGet() => TryGetRaw(typeName, methodIndex);
@@ -21,6 +22,7 @@ class UntypedMethodRef {
     }
 }
 
+[RequireAttributeUsages]
 [AttributeUsage(AttributeTargets.Method)]
 class MethodAllowsCallsFromAttribute : Attribute {
     public Type DelegateSupported;

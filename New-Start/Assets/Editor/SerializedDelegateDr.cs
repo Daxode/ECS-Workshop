@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine.UIElements;
 
-[CustomPropertyDrawer(typeof(SerializedMethodData<>))]
+[CustomPropertyDrawer(typeof(MethodRef<>))]
 class SerializedDelegateDr : PropertyDrawer {
     public override VisualElement CreatePropertyGUI(SerializedProperty property) {
         var container = new VisualElement();
