@@ -5,8 +5,7 @@ using Unity.Serialization;
 using UnityEngine;
 
 [Serializable]
-[ChunkSerializable]
-public class SerializedMethodData<TDelegate> : IComponentData where TDelegate : Delegate
+public class SerializedMethodData<TDelegate> where TDelegate : Delegate
 {
     [DontSerialize] IntPtr m_CachedAction; // ready at runtime
     [SerializeField] UntypedMethodRef untypedMethodRef;
