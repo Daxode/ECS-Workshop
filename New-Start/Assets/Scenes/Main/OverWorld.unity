@@ -220,10 +220,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   myEventsAsset:
-    methodReference:
-      typeNameToFindStaticMethodOnDeserialization: CoolUtilities, Assembly-CSharp,
-        Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-      overloadIndex: 0
+    untypedMethodRef:
+      typeName: Utilities, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      methodIndex: 1
+  myNormalAttacks:
+    untypedMethodRef:
+      typeName: Utilities, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      methodIndex: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
