@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Unity.Burst;
-using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -28,16 +27,8 @@ internal static class MethodReferenceDrawerUtility {
             TypeCache.GetMethodsWithAttribute(typeof(MethodAllowsCallsFromAttribute))
                 .Where(m => m.GetCustomAttribute<MethodAllowsCallsFromAttribute>()?.DelegateSupported == propertyDelegateType)
         );
-
-        // Assert matches signature of delegate type
-        for (var i = validMethodsToPick.Count - 1; i >= 0; i--) {
-            var validMethodToPick = validMethodsToPick[i];
-            if (Delegate.CreateDelegate(propertyDelegateType, validMethodToPick, false) is null) {
-                Debug.LogError($"Method {validMethodToPick} does not match delegate type {propertyDelegateType}");
-                validMethodsToPick.RemoveAtSwapBack(i);
-            }
-        }
-
+        
+        // if no methods found, mention it
         if (validMethodsToPick.Count == 0) {
             container.Add(new Label($"No methods found for delegate type {propertyDelegateType}"));
             return;
