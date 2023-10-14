@@ -9,24 +9,29 @@ using System.Runtime.InteropServices;
 [Serializable]
 public class MethodRef<TDelegate> where TDelegate : Delegate
 {
-    [DontSerialize] FunctionPointer<TDelegate> m_CachedAction; // ready at runtime
+    // Stores a managed reference to the method
     [SerializeField] UntypedMethodRef untypedMethodRef;
     
+    // Can only be used at runtime
+    [DontSerialize] FunctionPointer<TDelegate> m_CachedAction;
     public FunctionPointer<TDelegate> Get() {
         if (!m_CachedAction.IsCreated) UpdateCachedAction();
         return m_CachedAction;
     }
 
+    // This converts the authoring data to the runtime data (used at runtime)
     public void UpdateCachedAction() {
-        // get methods with matching name, then pick the one with the right overload index
+        // Get methods with matching name, then pick the one with the right overload index
         var method = untypedMethodRef.TryGet();
+        if (method == null) 
+            throw new Exception($"Method {untypedMethodRef.typeName}.{untypedMethodRef.methodIndex} not found");
+
+        // Get function pointer
 #if ENABLE_IL2CPP
         var ptr = Marshal.GetFunctionPointerForDelegate(method.CreateDelegate(typeof(TDelegate)));
 #else
         var ptr = method.MethodHandle.GetFunctionPointer();
 #endif
         m_CachedAction = new FunctionPointer<TDelegate>(ptr);
-        if (!m_CachedAction.IsCreated)
-            throw new Exception("Action failed to resolve");
     }
 }

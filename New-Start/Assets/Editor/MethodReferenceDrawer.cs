@@ -29,8 +29,12 @@ internal static class MethodReferenceDrawerUtility {
         );
         
         // if no methods found, mention it
-        if (validMethodsToPick.Count == 0) {
-            container.Add(new Label($"No methods found for delegate type {propertyDelegateType}"));
+        if (validMethodsToPick.Count == 0) { 
+            var field = new PopupField<string>(nameOverride ?? property.name, new List<string> {
+                $"No methods found for delegate type {propertyDelegateType}"
+            }, 0);
+            field.SetEnabled(false);
+            container.Add(field);
             return;
         }
         
