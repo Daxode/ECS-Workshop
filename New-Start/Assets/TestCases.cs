@@ -1,137 +1,72 @@
 ﻿using System;
-using AOT;
 using Unity.Burst;
-using Unity.Collections.LowLevel.Unsafe;
+using Unity.Core;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-[assembly: RegisterGenericComponentType(typeof(MethodRef<MyAttackCall>))]
-[assembly: RegisterGenericComponentType(typeof(MethodRef<Action>))]
-public delegate void MyAttackCall(IntPtr emPtr, int i, int v);
-
-public partial class TestCases : MonoBehaviour {
+// Authoring Data
+public class TestCases : MonoBehaviour {
     [Serializable]
-    public class MyEvents : IComponentData {
-       public MethodRef<MyAttackCall> myEventsAsset;
-       public MethodRef<Action> myNormalAttacks;
-    }
-    
-    public struct MyUnmanagedEvents : IComponentData {
-        public FunctionPointer<MyAttackCall> myEventsAsset;
-        public FunctionPointer<Action> myNormalAttacks;
+    public class MoveCubeCallSetup : IComponentData {
+       public MethodRef<CallbackMoveCube> value;
     }
 
-    public MyEvents AttackStyles;
+    public MoveCubeCallSetup moveCubeCall;
 
-    private class TestEventsBaker : Baker<TestCases> {
+    class TestEventsBaker : Baker<TestCases> {
         public override void Bake(TestCases authoring) {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-            if (authoring.AttackStyles is null) return;
-            AddComponentObject(entity, authoring.AttackStyles);
+            AddComponentObject(entity, authoring.moveCubeCall);
         }
     }
 }
 
+// Runtime Data
+public struct MoveCubeCall : IComponentData {
+    public FunctionPointer<CallbackMoveCube> Value;
+}
+public delegate void CallbackMoveCube(ref LocalTransform transform, ref TimeData time);
 
-partial struct MySystem : ISystem, ISystemStartStop {
-    public void OnCreate(ref SystemState state) 
-        => state.RequireForUpdate<TestCases.MyEvents>();
+partial struct MyInitSystem : ISystem, ISystemStartStop {
+    EntityQuery m_MoveCubeCallQuery;
+    public void OnCreate(ref SystemState state) {
+        // Find all entities with events
+        m_MoveCubeCallQuery = SystemAPI.QueryBuilder().WithAny<TestCases.MoveCubeCallSetup>().Build();
+        state.RequireForUpdate(m_MoveCubeCallQuery);
+    }
     
-    [BurstCompile]
-    public unsafe void OnUpdate(ref SystemState state) {
-        // ReSharper disable once Unity.Entities.SingletonMustBeRequested
-        var events = SystemAPI.GetSingleton<TestCases.MyUnmanagedEvents>();
-        var e = SystemAPI.GetSingletonEntity<TestCases.MyUnmanagedEvents>();
-        var em = state.EntityManager;
-        events.myEventsAsset.Invoke((IntPtr)UnsafeUtility.AddressOf(ref em), e.Index, e.Version);
-        events.myNormalAttacks.Invoke();
-        state.Enabled = false;
-    }
-
     public void OnStartRunning(ref SystemState state) {
-        var test = SystemAPI.ManagedAPI.GetSingleton<TestCases.MyEvents>();
-        var testEntity = SystemAPI.ManagedAPI.GetSingletonEntity<TestCases.MyEvents>();
-        state.EntityManager.AddComponentData(testEntity, new TestCases.MyUnmanagedEvents {
-            myEventsAsset = test.myEventsAsset.Get(),
-            myNormalAttacks = test.myNormalAttacks.Get()
-        });
+        // Add the unmanaged component
+        state.EntityManager.AddComponent<MoveCubeCall>(m_MoveCubeCallQuery);
+        foreach (var (moveCubeCallSetup, moveCubeCallRef) in SystemAPI.Query<TestCases.MoveCubeCallSetup, RefRW<MoveCubeCall>>()) {
+            moveCubeCallRef.ValueRW = new MoveCubeCall {
+                Value = moveCubeCallSetup.value.Get()
+            };
+        }
 
-        // if (CoolUtilities.HasCalledLogHi) {
-        //     var e = SystemAPI.ManagedAPI.GetSingletonEntity<TestCases.MyEvents>();
-        //     SystemAPI.SetComponent(e, LocalTransform.FromPosition(0,2,3));
-        // }
+        // Remove the managed component
+        state.EntityManager.RemoveComponent<TestCases.MoveCubeCallSetup>(m_MoveCubeCallQuery);
     }
+    public void OnStopRunning(ref SystemState state) {}
+}
 
-    public void OnStopRunning(ref SystemState state) {
-        
+partial struct MySystem : ISystem {
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state) {
+        var em = state.EntityManager;
+        foreach (var (transformRef, moveCubeCall) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<MoveCubeCall>>()) {
+            var timeData = SystemAPI.Time;
+            moveCubeCall.ValueRO.Value.Invoke(ref transformRef.ValueRW, ref timeData);
+        }
     }
 }
 
 [BurstCompile]
-public static class Utilities {
-    [MethodAllowsCallsFrom(typeof(Action))]
-    [MonoPInvokeCallback(typeof(MyAttackCall))]
-    public static void LogHi() {
-        Debug.Log("Hi");
-    }
-    
-    [MethodAllowsCallsFrom(typeof(MyAttackCall))]
+public static class MoveCalls {
     [BurstCompile]
-    [MonoPInvokeCallback(typeof(MyAttackCall))]
-    public unsafe static void LogHdwadi(IntPtr emPtr, int i, int v) {
-        ref var em = ref UnsafeUtility.AsRef<EntityManager>((void*)emPtr);
-        var entity = new Entity { Index = i, Version = v };
-        var burstIsDisabled = false;
-        LogIfNotBursted(ref burstIsDisabled);
-        em.SetComponentData(entity, burstIsDisabled 
-                ? LocalTransform.FromPosition(0, 2, 5) 
-                : LocalTransform.FromPosition(5, 2, 3));
-    }
-    
-    [BurstDiscard]
-    public static void LogIfNotBursted(ref bool burstIsDisabled) {
-        burstIsDisabled = true;
-        Debug.Log("I am not bursted");
-    }
-    
-    public static void LogHi(float a) {
-        Debug.Log($"Hi {a}");
-    }
-    
-    [MethodAllowsCallsFrom(typeof(Action))]
-    public static void OtherThingy() {
-        Debug.Log("OtherThingy");
-    }
-    
-    [MethodAllowsCallsFrom(typeof(Action))]
-    public static void OtherThingy2() {
-        Debug.Log("OtherThingy2");
-    }
-    
-    [MethodAllowsCallsFrom(typeof(MyAttackCall))]
-    public static void OtherThingy3(IntPtr emPtr, int i, int v) {
-        Debug.Log("OtherThingy3");
-    }
-    
-    [MethodAllowsCallsFrom(typeof(MyAttackCall))]
-    public static void Invalid(int a) {
-        Debug.Log("Invalid");
-    }
-}
-
-// CoolUtilities
-static class CoolUtilities {
-    [MethodAllowsCallsFrom(typeof(Action))]
-    public static void LogHid() {
-        Debug.Log("Hi");
-        HasCalledLogHi = true;
-    }
-
-    internal static bool HasCalledLogHi = false;
-    
-    [MethodAllowsCallsFrom(typeof(Action))]
-    static void OtherThingy() {
-        Debug.Log("OtherThingy");
-    }
+    [MethodAllowsCallsFrom(typeof(CallbackMoveCube))]
+    static void Spin(ref LocalTransform transform, ref TimeData time) 
+        => transform.Rotation = math.mul(transform.Rotation, quaternion.RotateY(time.DeltaTime * 3f));
 }
