@@ -6,6 +6,8 @@
 /[Tt]emp/
 /[Oo]bj/
 /[Bb]uild/
+/[Bb]uild-IL2CPP/
+/[Bb]uild-il2cpp/
 /[Bb]uilds/
 /[Ll]ogs/
 /[Mm]emoryCaptures/
