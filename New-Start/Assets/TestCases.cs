@@ -29,25 +29,22 @@ public struct MoveCubeCall : IComponentData {
 }
 public delegate void CallbackMoveCube(ref LocalTransform transform, ref TimeData time);
 
+// Setup MoveCubeCall from MoveCubeCallSetup
 partial struct MyInitSystem : ISystem, ISystemStartStop {
-    EntityQuery m_MoveCubeCallQuery;
+    EntityQuery m_NeedsInitQuery;
     public void OnCreate(ref SystemState state) {
-        // Find all entities with events
-        m_MoveCubeCallQuery = SystemAPI.QueryBuilder().WithAny<TestCases.MoveCubeCallSetup>().Build();
-        state.RequireForUpdate(m_MoveCubeCallQuery);
+        m_NeedsInitQuery = SystemAPI.QueryBuilder().WithAll<TestCases.MoveCubeCallSetup>().WithNone<MoveCubeCall>().Build();
+        state.RequireForUpdate(m_NeedsInitQuery);
     }
-    
+
     public void OnStartRunning(ref SystemState state) {
-        // Add the unmanaged component
-        state.EntityManager.AddComponent<MoveCubeCall>(m_MoveCubeCallQuery);
+        // create MoveCubeCall from MoveCubeCallSetup
+        state.EntityManager.AddComponent<MoveCubeCall>(m_NeedsInitQuery);
         foreach (var (moveCubeCallSetup, moveCubeCallRef) in SystemAPI.Query<TestCases.MoveCubeCallSetup, RefRW<MoveCubeCall>>()) {
             moveCubeCallRef.ValueRW = new MoveCubeCall {
                 Value = moveCubeCallSetup.value.Get()
             };
         }
-
-        // Remove the managed component
-        state.EntityManager.RemoveComponent<TestCases.MoveCubeCallSetup>(m_MoveCubeCallQuery);
     }
     public void OnStopRunning(ref SystemState state) {}
 }
@@ -69,4 +66,23 @@ public static class MoveCalls {
     [MethodAllowsCallsFrom(typeof(CallbackMoveCube))]
     static void Spin(ref LocalTransform transform, ref TimeData time) 
         => transform.Rotation = math.mul(transform.Rotation, quaternion.RotateY(time.DeltaTime * 3f));
+    
+    [BurstCompile]
+    [MethodAllowsCallsFrom(typeof(CallbackMoveCube))]
+    static void Move(ref LocalTransform transform, ref TimeData time) 
+        => transform.Position += new float3(0, 0, math.sin((float)time.ElapsedTime) * 0.01f);
+    
+    [BurstCompile]
+    [MethodAllowsCallsFrom(typeof(CallbackMoveCube))]
+    static void Scale(ref LocalTransform transform, ref TimeData time) 
+        => transform.Scale = math.lerp(transform.Scale, 10, time.DeltaTime * 0.1f);
+    
+    // bounce up and down
+    [BurstCompile]
+    [MethodAllowsCallsFrom(typeof(CallbackMoveCube))]
+    static void Bounce(ref LocalTransform transform, ref TimeData time) {
+        var pos = transform.Position;
+        pos.y = math.sin((float)time.ElapsedTime) * 2f;
+        transform.Position = pos;
+    }
 }
