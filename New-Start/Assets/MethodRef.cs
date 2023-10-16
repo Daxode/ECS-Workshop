@@ -24,7 +24,7 @@ public class MethodRef<TDelegate> where TDelegate : Delegate
         // Get methods with matching name, then pick the one with the right overload index
         var method = untypedMethodRef.TryGet();
         if (method == null) 
-            throw new Exception($"Method {untypedMethodRef.typeName}.{untypedMethodRef.methodIndex} not found");
+            throw new Exception($"Method '{untypedMethodRef.typeName}.{untypedMethodRef.name}' with overload '{untypedMethodRef.overloadIndex}' not found");
 
         // Get function pointer
 #if ENABLE_IL2CPP

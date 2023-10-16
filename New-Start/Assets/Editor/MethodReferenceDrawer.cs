@@ -25,7 +25,9 @@ internal static class MethodReferenceDrawerUtility {
         // find all methods for this delegate type
         var validMethodsToPick = new List<MethodInfo>(
             TypeCache.GetMethodsWithAttribute(typeof(MethodAllowsCallsFromAttribute))
-                .Where(m => m.GetCustomAttribute<MethodAllowsCallsFromAttribute>()?.DelegateSupported == propertyDelegateType)
+                .Where(m => 
+                    m.GetCustomAttribute<MethodAllowsCallsFromAttribute>()?.DelegateSupported == propertyDelegateType
+                    && m.MethodImplementationFlags == MethodImplAttributes.IL)
         );
         
         // if no methods found, mention it
@@ -39,44 +41,55 @@ internal static class MethodReferenceDrawerUtility {
         }
         
         // find currently serialized method
-        var methodIndexProperty = property.FindPropertyRelative("methodIndex");
-        var methodTypeProperty = property.FindPropertyRelative("typeName");
+        var overloadIndexProperty = property.FindPropertyRelative("overloadIndex");
+        var typeNameProperty = property.FindPropertyRelative("typeName");
+        var nameProperty = property.FindPropertyRelative("name");
         var hasBurstCompileAttributeProperty = property.FindPropertyRelative("hasBurstCompileAttribute");
-        var currentMethodInfo = UntypedMethodRef.TryGetRaw(methodTypeProperty?.stringValue, methodIndexProperty!.intValue);
+        var currentMethodInfo = UntypedMethodRef.TryGetRaw(typeNameProperty?.stringValue, nameProperty?.stringValue, overloadIndexProperty!.intValue);
         currentMethodInfo = validMethodsToPick.FirstOrDefault(m => m == currentMethodInfo);
         currentMethodInfo ??= validMethodsToPick[0]; // default to first method if none found
-        currentMethodInfo.TryApplyTo(methodTypeProperty, methodIndexProperty, hasBurstCompileAttributeProperty);
+        currentMethodInfo.TryApplyTo(typeNameProperty, nameProperty, overloadIndexProperty, hasBurstCompileAttributeProperty);
         
         // Set up type method picker
         var methodSelectionField = new PopupField<MethodInfo>(nameOverride ?? property.name, validMethodsToPick, currentMethodInfo,
             MethodInfoToNiceName, MethodInfoToNiceName);
         methodSelectionField.RegisterValueChangedCallback(e
-            => e.newValue.TryApplyTo(methodTypeProperty, methodIndexProperty, hasBurstCompileAttributeProperty));
+            => e.newValue.TryApplyTo(typeNameProperty, nameProperty, overloadIndexProperty, hasBurstCompileAttributeProperty));
         
         container.Add(methodSelectionField);
     }
 
-    static void TryApplyTo(this MethodInfo methodToSet, 
-        SerializedProperty methodTypeProperty, 
-        SerializedProperty methodIndexProperty,
+    static void TryApplyTo(this MethodInfo methodToSet,
+        SerializedProperty typeNameProperty,
+        SerializedProperty nameProperty,
+        SerializedProperty overloadIndexProperty,
         SerializedProperty hasBurstCompileAttributeProperty = null) {
         if (methodToSet?.DeclaringType is not {} methodType) return; 
 
         // set type
-        if (methodTypeProperty != null) 
-            methodTypeProperty.stringValue = methodType.AssemblyQualifiedName;
+        if (typeNameProperty != null) 
+            typeNameProperty.stringValue = methodType.AssemblyQualifiedName;
             
         // find index
-        if (methodIndexProperty != null) {
+        if (nameProperty != null)
+            nameProperty.stringValue = methodToSet.Name;
+        
+        if (overloadIndexProperty != null) {
             var methodsOnType = methodType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            methodIndexProperty.intValue = Array.IndexOf(methodsOnType, methodToSet);
+            var overloadIndex = 0;
+            foreach (var methodInfo in methodsOnType) {
+                if (methodInfo.Name != methodToSet.Name) continue;
+                if (methodInfo == methodToSet) break;
+                overloadIndex++;
+            }
+            overloadIndexProperty.intValue = overloadIndex;
         }
         
         // check if has burst compile attribute
         if (hasBurstCompileAttributeProperty is not null)
             hasBurstCompileAttributeProperty.boolValue = methodToSet.GetCustomAttribute<BurstCompileAttribute>() != null;
         
-        (methodTypeProperty ?? methodIndexProperty)?.serializedObject.ApplyModifiedProperties();
+        typeNameProperty?.serializedObject.ApplyModifiedProperties();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

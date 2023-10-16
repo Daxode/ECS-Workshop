@@ -223,7 +223,8 @@ MonoBehaviour:
     value:
       untypedMethodRef:
         typeName: MoveCalls, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-        methodIndex: 0
+        name: Scale
+        overloadIndex: 0
         hasBurstCompileAttribute: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
