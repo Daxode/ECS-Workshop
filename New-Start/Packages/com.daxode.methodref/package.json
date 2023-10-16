@@ -1,0 +1,9 @@
+﻿{
+  "name": "com.daxode.methodref",
+  "version": "1.0.0",
+  "description": "This adds the ability to use serialized method references in Unity",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Daxode/ECS-Workshop.git"
+  }
+}

@@ -5,6 +5,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using Daxode.MethodReference;
 
 // Authoring Data
 public class TestCases : MonoBehaviour {

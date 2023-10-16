@@ -1,0 +1,17 @@
+{
+    "name": "Daxode.MethodReference",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Serialization",
+        "Unity.Burst"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
