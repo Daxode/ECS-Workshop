@@ -336,7 +336,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b871b33763df4abaa5752a150c300924, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 5413112551599386477, guid: 27623e5bf22345e4484cbe1e8c735f0f,
+  animator: {fileID: 2441921970310086477, guid: 1b2ba32b5570b9742b988661869f4d09,
     type: 3}
 --- !u!1001 &9007420518622177731
 PrefabInstance:

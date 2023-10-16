@@ -95,7 +95,7 @@ MonoBehaviour:
       m_Action: Directional Input
       m_Flags: 8
     m_Flags: 0
-  speed: 1000
+  speed: 500
   model: {fileID: 7849303421954042261}
 --- !u!54 &6689604505083170449
 Rigidbody:
@@ -169,7 +169,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b871b33763df4abaa5752a150c300924, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 3394971571969024659, guid: c80a0d8c5d0468a49bc959a6f1cfbaea,
+  animator: {fileID: 7791049181742069613, guid: 27a6b0706bc6fdd4e97540b4a7d07997,
     type: 3}
 --- !u!136 &6673791109087367968
 CapsuleCollider:
