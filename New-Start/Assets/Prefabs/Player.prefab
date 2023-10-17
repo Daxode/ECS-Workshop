@@ -183,8 +183,12 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 3581797206451854041, guid: a3c1ad6516e30ae4880be370a5c57e47,
         type: 3}
-      insertIndex: 3
+      insertIndex: -1
       addedObject: {fileID: 1311181341629377527}
+    - targetCorrespondingSourceObject: {fileID: 3581797206451854041, guid: a3c1ad6516e30ae4880be370a5c57e47,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4495341595803940448}
   m_SourcePrefab: {fileID: 100100000, guid: a3c1ad6516e30ae4880be370a5c57e47, type: 3}
 --- !u!4 &3879435536556527588 stripped
 Transform:
@@ -260,3 +264,35 @@ MonoBehaviour:
       m_Flags: 8
     m_Flags: 0
   speed: 2
+--- !u!114 &4495341595803940448
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7533902438825344168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4e629cc2cf44051bd39b20d139160e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dashInput:
+    m_Name: Dash Input
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 375e6ac5-6372-4ae7-9b0a-7d3f0c403cf1
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 764d348d-2e8d-466f-b5e8-c63905279f91
+      m_Path: <Keyboard>/shift
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Dash Input
+      m_Flags: 0
+    m_Flags: 0
+  dashSpeed: 10
+  dashInvincibilityDuration: 0.2
+  dashCooldown: 1

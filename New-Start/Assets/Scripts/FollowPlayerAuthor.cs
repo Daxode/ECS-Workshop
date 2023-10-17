@@ -5,14 +5,14 @@ using Unity.Transforms;
 using UnityEngine;
 
 [RequireComponent(typeof(StillRotationModelAuthor))]
-public class FollowPlayer : MonoBehaviour
+public class FollowPlayerAuthor : MonoBehaviour
 {
     [SerializeField] float speed;
     [SerializeField] float2 m_SlowDownRange = new (4, 6);
     
-    class Baker : Baker<FollowPlayer>
+    class Baker : Baker<FollowPlayerAuthor>
     {
-        public override void Bake(FollowPlayer authoring)
+        public override void Bake(FollowPlayerAuthor authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new FollowPlayerData
@@ -38,7 +38,7 @@ partial struct FollowPlayerSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         foreach (var (followPlayerDataRef, ltRef, velRef, rotateTowardsData, model) in SystemAPI.Query<
-                     RefRW<FollowPlayer.FollowPlayerData>, RefRO<LocalTransform>, 
+                     RefRW<FollowPlayerAuthor.FollowPlayerData>, RefRO<LocalTransform>, 
                      RefRW<PhysicsVelocity>, RefRW<RotateTowardsData>, ModelForEntity>())
         {
             var followPlayerData = followPlayerDataRef.ValueRO;

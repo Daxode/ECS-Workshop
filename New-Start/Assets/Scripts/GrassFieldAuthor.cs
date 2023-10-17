@@ -9,7 +9,7 @@ using BoxCollider = UnityEngine.BoxCollider;
 // Based on the EntitiesSample 'BakingDependencies' found here:
 // https://github.com/Unity-Technologies/EntityComponentSystemSamples/tree/master/EntitiesSamples/Assets/Baking/BakingDependencies
 [RequireComponent(typeof(BoxCollider))]
-public class GrassFieldAuthoring : MonoBehaviour
+public class GrassFieldAuthor : MonoBehaviour
 {
     [SerializeField] GameObject grassPrefab;
     [SerializeField] int grassCount = 100;
@@ -18,9 +18,9 @@ public class GrassFieldAuthoring : MonoBehaviour
     [SerializeField] float threshold;
     [Range(0.01f, 10f)]
     [SerializeField] float noiseScale;
-    class Baker : Baker<GrassFieldAuthoring>
+    class Baker : Baker<GrassFieldAuthor>
     {
-        public override void Bake(GrassFieldAuthoring authoring)
+        public override void Bake(GrassFieldAuthor authoring)
         {
             var boxCollider = GetComponent<BoxCollider>(authoring);
             var meshRenderer = GetComponentInChildren<MeshRenderer>(authoring.grassPrefab);
@@ -77,7 +77,7 @@ public struct GrassEntity : IBufferElementData
 }
 
 [WorldSystemFilter(WorldSystemFilterFlags.BakingSystem)]
-partial struct GrassFieldBakingSystem : ISystem
+partial struct GrassScatterSystem : ISystem
 {
     EntityQuery m_GrassEntitiesQuery;
 
