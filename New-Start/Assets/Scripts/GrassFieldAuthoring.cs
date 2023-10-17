@@ -4,6 +4,7 @@ using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
+using BoxCollider = UnityEngine.BoxCollider;
 
 // Based on the EntitiesSample 'BakingDependencies' found here:
 // https://github.com/Unity-Technologies/EntityComponentSystemSamples/tree/master/EntitiesSamples/Assets/Baking/BakingDependencies
@@ -13,6 +14,10 @@ public class GrassFieldAuthoring : MonoBehaviour
     [SerializeField] GameObject grassPrefab;
     [SerializeField] int grassCount = 100;
     [SerializeField] uint seed;
+    [Range(-0.99f, 0.99f)]
+    [SerializeField] float threshold;
+    [Range(0.01f, 10f)]
+    [SerializeField] float noiseScale;
     class Baker : Baker<GrassFieldAuthoring>
     {
         public override void Bake(GrassFieldAuthoring authoring)
@@ -33,11 +38,17 @@ public class GrassFieldAuthoring : MonoBehaviour
             for (var i = 0; i < authoring.grassCount; i++)
             {
                 var entity = CreateAdditionalEntity(TransformUsageFlags.ManualOverride);
-                var worldPosition = new Vector3(
-                    random.NextFloat(-size.x, size.x),
-                    0,
-                    random.NextFloat(-size.y, size.y)
-                ) + boxCollider.center + authoring.transform.position;
+                
+                // distribute grass randomly using perlin noise
+                var pos = random.NextFloat2(-size, size);
+                var noise = Unity.Mathematics.noise.snoise(pos * authoring.noiseScale);
+                while (noise < authoring.threshold)
+                {
+                    pos = random.NextFloat2(-size, size);
+                    noise = Unity.Mathematics.noise.snoise(pos * authoring.noiseScale);
+                }
+                var worldPosition = new Vector3(pos.x, 0, pos.y);
+                worldPosition += boxCollider.center + authoring.transform.position;
                 AddComponent(entity, new LocalToWorld{Value = float4x4.Translate(worldPosition)});
                 entities.Add(entity);
             }
