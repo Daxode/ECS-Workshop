@@ -4,11 +4,10 @@ using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 
+[RequireComponent(typeof(StillRotationModelAuthor))]
 public class FollowPlayer : MonoBehaviour
 {
     [SerializeField] float speed;
-    [SerializeField] Transform model;
-    [SerializeField] float rotateSpeed;
     private class Baker : Baker<FollowPlayer>
     {
         public override void Bake(FollowPlayer authoring)
@@ -18,23 +17,6 @@ public class FollowPlayer : MonoBehaviour
             {
                 speed = authoring.speed
             });
-            
-            // Make sure the model spins to face the direction of movement
-            AddComponent(entity, new ModelForEntity
-            {
-                modelEntity = authoring.model ? GetEntity(authoring.model, TransformUsageFlags.Dynamic) : Entity.Null
-            });
-            AddComponent(entity, new RotateTowardsData
-            {
-                speed = authoring.rotateSpeed
-            });
-            
-            // lock to xz plane
-            var jointEntity = CreateAdditionalEntity(TransformUsageFlags.None);
-            AddComponent(jointEntity, PhysicsJoint.CreateLimitedDOF(RigidTransform.identity,
-                new bool3(false,true,false), true));
-            AddComponent(jointEntity, new PhysicsConstrainedBodyPair(entity, Entity.Null, false));
-            AddComponent<PhysicsWorldIndex>(jointEntity);
         }
     }
 
