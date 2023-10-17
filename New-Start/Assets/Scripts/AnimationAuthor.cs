@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -11,6 +12,9 @@ namespace DefaultNamespace {
         
         class AnimationAuthorBaker : Baker<AnimationAuthor> {
             public override void Bake(AnimationAuthor authoring) {
+                if (authoring.animator == null)
+                    return;
+
                 var entity = GetEntity(TransformUsageFlags.Renderable);
                 AddComponentObject(entity, new AnimationManaged {
                     animator = authoring.animator
@@ -36,9 +40,12 @@ namespace DefaultNamespace {
             state.RequireForUpdate<AnimationAuthor.DrawInEditor>();
         }
         public void OnStartRunning(ref SystemState state) {
+            // ReSharper disable once Unity.Entities.SingletonMustBeRequested
             var ecb = SystemAPI
                 .GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
                 .CreateCommandBuffer(state.WorldUnmanaged);
+            
+            // Spawn the entity to draw in editor
             foreach (var (drawnEntities, parent) in SystemAPI.Query<AnimationAuthor.DrawInEditor>().WithEntityAccess()) {
                 var e = state.EntityManager.Instantiate(drawnEntities.entity);
                 if (SystemAPI.HasComponent<Parent>(e)) {
@@ -62,6 +69,7 @@ namespace DefaultNamespace {
             state.RequireForUpdate<AnimationAuthor.AnimationManaged>();
         }
         public void OnStartRunning(ref SystemState state) {
+            // ReSharper disable once Unity.Entities.SingletonMustBeRequested
             var ecb = SystemAPI
                 .GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
                 .CreateCommandBuffer(state.WorldUnmanaged);
@@ -76,7 +84,7 @@ namespace DefaultNamespace {
     }
     
     [UpdateAfter(typeof(TransformSystemGroup))]
-    partial struct SyncTransformWithGOSystem : ISystem {
+    partial struct SyncTransformWithGoSystem : ISystem {
         public void OnUpdate(ref SystemState state) {
             foreach (var (ltw, animator) in 
                      SystemAPI.Query<RefRO<LocalToWorld>, SystemAPI.ManagedAPI.UnityEngineComponent<Animator>>()) {
