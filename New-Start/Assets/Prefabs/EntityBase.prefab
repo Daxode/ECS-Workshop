@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9205061065177077825}
   - component: {fileID: 6689604505083170449}
+  - component: {fileID: 933971261111638520}
   m_Layer: 0
   m_Name: EntityBase
   m_TagString: Untagged
@@ -43,7 +44,7 @@ Rigidbody:
   serializedVersion: 4
   m_Mass: 1
   m_Drag: 0.1
-  m_AngularDrag: 0.1
+  m_AngularDrag: 2
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -55,11 +56,25 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &933971261111638520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3581797206451854041}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5b17e5d1b234dd281e0670742b44b1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  model: {fileID: 7849303421954042261}
+  rotateSpeed: 0.2
 --- !u!1 &4847416011452552399
 GameObject:
   m_ObjectHideFlags: 0
@@ -113,7 +128,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4847416011452552399}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 5b8aadce5aab1b044acd44a57414485e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0

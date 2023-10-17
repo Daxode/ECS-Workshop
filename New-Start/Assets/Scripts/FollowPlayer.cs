@@ -8,14 +8,17 @@ using UnityEngine;
 public class FollowPlayer : MonoBehaviour
 {
     [SerializeField] float speed;
-    private class Baker : Baker<FollowPlayer>
+    [SerializeField] float2 m_SlowDownRange = new (4, 6);
+    
+    class Baker : Baker<FollowPlayer>
     {
         public override void Bake(FollowPlayer authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new FollowPlayerData
             {
-                speed = authoring.speed
+                speed = authoring.speed,
+                slowDownRange = authoring.m_SlowDownRange
             });
         }
     }
@@ -24,6 +27,7 @@ public class FollowPlayer : MonoBehaviour
     {
         public Entity playerEntity;
         public float speed;
+        public float2 slowDownRange;
     }
 }
 
@@ -48,7 +52,7 @@ partial struct FollowPlayerSystem : ISystem
                 
                 // slow down when close
                 var distance = math.length(direction);
-                velocity *= math.smoothstep(4, 6, distance);
+                velocity *= math.smoothstep(followPlayerData.slowDownRange.x, followPlayerData.slowDownRange.y, distance);
                 velRef.ValueRW.Linear = velocity;
                 
                 // set animator
