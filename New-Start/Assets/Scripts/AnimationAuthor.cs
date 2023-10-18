@@ -1,5 +1,6 @@
 ﻿using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -62,7 +63,10 @@ namespace DefaultNamespace {
             
         }
     }
-    
+
+    class CleanupAnimation : ICleanupComponentData {
+        public Animator animatorToCleanup;
+    }
     
     partial struct AnimationSystem : ISystem, ISystemStartStop {
         public void OnCreate(ref SystemState state) {
@@ -77,6 +81,7 @@ namespace DefaultNamespace {
             foreach (var (animationManaged, entity) in SystemAPI.Query<AnimationAuthor.AnimationManaged>().WithEntityAccess()) {
                 var animatorInstance = Object.Instantiate(animationManaged.animator);
                 ecb.AddComponent(entity, animatorInstance);
+                ecb.AddComponent(entity, new CleanupAnimation {animatorToCleanup = animatorInstance});
             }
         }
 
@@ -86,10 +91,36 @@ namespace DefaultNamespace {
     [UpdateAfter(typeof(TransformSystemGroup))]
     partial struct SyncTransformWithGoSystem : ISystem {
         public void OnUpdate(ref SystemState state) {
+            // sync transform with animator
             foreach (var (ltw, animator) in 
                      SystemAPI.Query<RefRO<LocalToWorld>, SystemAPI.ManagedAPI.UnityEngineComponent<Animator>>()) {
                 var animatorTransform = animator.Value.transform;
                 animatorTransform.SetPositionAndRotation(ltw.ValueRO.Position, ltw.ValueRO.Rotation);
+            }
+            
+            // ReSharper disable once Unity.Entities.SingletonMustBeRequested
+            var ecb = SystemAPI
+                .GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
+                .CreateCommandBuffer(state.WorldUnmanaged);
+            
+            // if has no animator but has cleanup component, destroy the animator
+            var shouldCheckForJoint = false;
+            foreach (var (animator, e) in SystemAPI.Query<CleanupAnimation>().WithNone<Parent>().WithEntityAccess()) {
+                Object.Destroy(animator.animatorToCleanup.gameObject);
+                ecb.RemoveComponent<CleanupAnimation>(e);
+                ecb.DestroyEntity(e);
+                foreach (var child in SystemAPI.GetBuffer<Child>(e)) {
+                    ecb.DestroyEntity(child.Value);
+                }
+                shouldCheckForJoint = true;
+            }
+            
+            if (shouldCheckForJoint) {
+                foreach (var (joint, e) in SystemAPI.Query<PhysicsConstrainedBodyPair>().WithAll<PhysicsJoint>().WithEntityAccess()) {
+                    if (!SystemAPI.Exists(joint.EntityA)) {
+                        ecb.DestroyEntity(e);
+                    }
+                }
             }
         }
     }

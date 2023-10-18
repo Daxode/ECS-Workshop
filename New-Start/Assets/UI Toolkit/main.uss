@@ -1,0 +1,27 @@
+.unity-progress-bar__background {
+    background-color: rgba(27, 118, 141, 0.4);
+    border-top-right-radius: 5px;
+    border-top-width: 5px;
+    border-right-width: 5px;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-color: rgb(102, 51, 153);
+}
+
+.unity-progress-bar__progress {
+    background-color: rgb(33, 171, 116);
+    border-top-right-radius: 5px;
+    border-width: 0;
+}
+
+.unity-progress-bar__container {
+    min-height: auto;
+    max-height: 50px;
+}
+
+.game-indicator {
+    -unity-background-scale-mode: scale-to-fit;
+    position: relative;
+    width: 5%;
+    padding-bottom: 5%;
+}

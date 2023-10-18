@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/main.uss?fileID=7433441132597879392&amp;guid=3dd53c4ff7ebd7746a030fc70f8bb6b6&amp;type=3#main" />
+    <ui:VisualElement style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; justify-content: flex-start; flex-direction: row; align-items: flex-end;">
+        <ui:VisualElement name="stamina" class="game-indicator" style="background-image: url(&apos;project://database/Assets/Materials/StaminaCircleByCupNoodle.png?fileID=1199748605&amp;guid=45c8846356b152848872f48d1697673e&amp;type=3#StaminaCircleByCupNoodle_0&apos;);" />
+        <ui:VisualElement name="health" class="game-indicator" style="background-image: url(&apos;project://database/Assets/Materials/Hearts.png?fileID=1584292152&amp;guid=58a6378b26fcd584bac0bb30c8cc231b&amp;type=3#Hearts_full&apos;);" />
+    </ui:VisualElement>
+</ui:UXML>
