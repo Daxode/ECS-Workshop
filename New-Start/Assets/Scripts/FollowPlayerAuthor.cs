@@ -8,6 +8,7 @@ public class FollowPlayerAuthor : MonoBehaviour
 {
     [SerializeField] float speed;
     [SerializeField] float2 slowDownRange = new(4, 6);
+    [SerializeField] float shootInterval = 0.2f;
 
     class Baker : Baker<FollowPlayerAuthor>
     {
@@ -17,7 +18,9 @@ public class FollowPlayerAuthor : MonoBehaviour
             AddComponent(entity, new FollowPlayerData
             {
                 speed = authoring.speed,
-                slowDownRange = authoring.slowDownRange
+                slowDownRange = authoring.slowDownRange,
+                shootInterval = authoring.shootInterval,
+                shootTimer = authoring.shootInterval
             });
             AddComponent(entity, new AttackDamage
             {
