@@ -71,6 +71,9 @@ partial struct ShooterSystem : ISystem, ISystemStartStop
         }
     }
 
+    public void OnCreate(ref SystemState state) 
+        => state.RequireForUpdate<Shooter>();
+
     public void OnStartRunning(ref SystemState state)
     {
         foreach (var shooterManaged in SystemAPI.Query<ShooterManaged>())
