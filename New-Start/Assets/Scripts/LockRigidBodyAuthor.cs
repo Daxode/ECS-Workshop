@@ -4,9 +4,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
-using Unity.Physics.Authoring;
 using UnityEngine;
-using Collider = Unity.Physics.Collider;
 
 [RequireComponent(typeof(Rigidbody))]
 public class LockRigidBodyAuthor : MonoBehaviour
@@ -32,21 +30,7 @@ public class LockRigidBodyAuthor : MonoBehaviour
             {
                 JointEntity = jointEntity
             });
-        }
-    }
-}
-
-[WorldSystemFilter(WorldSystemFilterFlags.BakingSystem)]
-[UpdateAfter(typeof(EndColliderBakingSystem))]
-partial struct BakeCollisionResponseSystem : ISystem
-{
-    [BurstCompile]
-    public unsafe void OnUpdate(ref SystemState state)
-    {
-        foreach (var colRef in SystemAPI.Query<PhysicsCollider>().WithAll<JointReference>())
-        {
-            ref var collider = ref UnsafeUtility.AsRef<Collider>(colRef.ColliderPtr);
-            collider.SetCollisionResponse(CollisionResponsePolicy.CollideRaiseCollisionEvents);
+            AddComponent<SetRaisedCollisionEvents>(entity);
         }
     }
 }

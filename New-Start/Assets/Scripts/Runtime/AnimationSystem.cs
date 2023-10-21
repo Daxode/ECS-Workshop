@@ -16,35 +16,25 @@ class AnimationManaged : IComponentData
 }
 
 [UpdateAfter(typeof(TransformSystemGroup))]
-partial struct AnimationSystem : ISystem, ISystemStartStop
+partial struct AnimationSystem : ISystem
 {
-    public void OnCreate(ref SystemState state)
-    {
-        state.RequireForUpdate<AnimationManaged>();
-    }
+    static readonly int k_DeathAnimatorID = Animator.StringToHash("Death");
 
-    public void OnStartRunning(ref SystemState state)
+    public void OnUpdate(ref SystemState state)
     {
         // ReSharper disable once Unity.Entities.SingletonMustBeRequested
         var ecb = SystemAPI
             .GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
             .CreateCommandBuffer(state.WorldUnmanaged);
-
-        foreach (var (animationManaged, entity) in SystemAPI.Query<AnimationManaged>()
-                     .WithEntityAccess())
+        
+        foreach (var (animationManaged, entity) in SystemAPI
+                     .Query<AnimationManaged>().WithNone<CleanupAnimation>().WithEntityAccess())
         {
             var animatorInstance = Object.Instantiate(animationManaged.animator);
             ecb.AddComponent(entity, animatorInstance);
             ecb.AddComponent(entity, new CleanupAnimation { animatorToCleanup = animatorInstance });
         }
-    }
-    
-    public void OnStopRunning(ref SystemState state) {}
-
-    static readonly int k_DeathAnimatorID = Animator.StringToHash("Death");
-
-    public void OnUpdate(ref SystemState state)
-    {
+        
         // sync transform with animator
         foreach (var (ltw, animator) in
                  SystemAPI.Query<RefRO<LocalToWorld>, SystemAPI.ManagedAPI.UnityEngineComponent<Animator>>())
@@ -52,12 +42,7 @@ partial struct AnimationSystem : ISystem, ISystemStartStop
             var animatorTransform = animator.Value.transform;
             animatorTransform.SetPositionAndRotation(ltw.ValueRO.Position, ltw.ValueRO.Rotation);
         }
-
-        // ReSharper disable once Unity.Entities.SingletonMustBeRequested
-        var ecb = SystemAPI
-            .GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
-            .CreateCommandBuffer(state.WorldUnmanaged);
-
+        
         // if has no animator but has cleanup component, destroy the animator
         foreach (var (animator, e) in SystemAPI.Query<CleanupAnimation>().WithNone<Parent>().WithEntityAccess())
         {

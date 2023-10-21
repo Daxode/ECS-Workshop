@@ -1,6 +1,7 @@
 ﻿using System;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Physics;
 using Unity.Physics.Systems;
@@ -9,6 +10,27 @@ struct AttackDamage : IComponentData
 {
     public int damage;
     public Entity owningEntity;
+}
+
+struct SetRaisedCollisionEvents : IComponentData {}
+
+partial struct SetupCollisionResponseSystem : ISystem
+{
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+        => state.RequireForUpdate<SetRaisedCollisionEvents>();
+
+    [BurstCompile]
+    public unsafe void OnUpdate(ref SystemState state)
+    {
+        foreach (var colRef in SystemAPI.Query<PhysicsCollider>().WithAll<SetRaisedCollisionEvents>())
+        {
+            ref var collider = ref UnsafeUtility.AsRef<Collider>(colRef.ColliderPtr);
+            collider.SetCollisionResponse(CollisionResponsePolicy.CollideRaiseCollisionEvents);
+        }
+        state.EntityManager.RemoveComponent<SetRaisedCollisionEvents>(
+            SystemAPI.QueryBuilder().WithAll<SetRaisedCollisionEvents>().Build());
+    }
 }
 
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
