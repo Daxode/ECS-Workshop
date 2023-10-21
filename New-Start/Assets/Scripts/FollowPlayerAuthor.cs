@@ -1,19 +1,16 @@
-using Unity.Burst;
-using Unity.Collections;
+using System;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
-using Unity.Physics.Systems;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [RequireComponent(typeof(StillRotationModelAuthor))]
 public class FollowPlayerAuthor : MonoBehaviour
 {
     [SerializeField] float speed;
-    [SerializeField] float2 m_SlowDownRange = new (4, 6);
-    
+    [SerializeField] float2 slowDownRange = new(4, 6);
+
     class Baker : Baker<FollowPlayerAuthor>
     {
         public override void Bake(FollowPlayerAuthor authoring)
@@ -22,102 +19,61 @@ public class FollowPlayerAuthor : MonoBehaviour
             AddComponent(entity, new FollowPlayerData
             {
                 speed = authoring.speed,
-                slowDownRange = authoring.m_SlowDownRange
+                slowDownRange = authoring.slowDownRange
+            });
+            AddComponent(entity, new AttackDamage
+            {
+                damage = 1,
+                owningEntity = entity
             });
         }
     }
+}
 
-    internal struct FollowPlayerData : IComponentData
-    {
-        public Entity playerEntity;
-        public float speed;
-        public float2 slowDownRange;
-    }
+struct FollowPlayerData : IComponentData
+{
+    public float speed;
+    public float2 slowDownRange;
 }
 
 partial struct FollowPlayerSystem : ISystem
 {
     static readonly int k_Blend = Animator.StringToHash("Blend");
 
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<PlayerMovementManaged>();
+    }
+
     public void OnUpdate(ref SystemState state)
     {
+        var playerEntity = SystemAPI.ManagedAPI.GetSingletonEntity<PlayerMovementManaged>();
+        var playerPosition = SystemAPI.GetComponent<LocalTransform>(playerEntity).Position;
+
         foreach (var (followPlayerDataRef, ltRef, velRef, rotateTowardsData, model) in SystemAPI.Query<
-                     RefRW<FollowPlayerAuthor.FollowPlayerData>, RefRO<LocalTransform>, 
+                     RefRW<FollowPlayerData>, RefRO<LocalTransform>,
                      RefRW<PhysicsVelocity>, RefRW<RotateTowardsData>, ModelForEntity>())
         {
             var followPlayerData = followPlayerDataRef.ValueRO;
-            if (followPlayerData.playerEntity == Entity.Null)
-                followPlayerDataRef.ValueRW.playerEntity = SystemAPI.ManagedAPI.GetSingletonEntity<PlayerMovementAuthor.PlayerInputManaged>();
-            else {
-                if (!SystemAPI.Exists(followPlayerData.playerEntity)) return;
-                var playerPosition = SystemAPI.GetComponent<LocalTransform>(followPlayerData.playerEntity).Position;
-                var direction = playerPosition - ltRef.ValueRO.Position;
-                var dirNormalized = math.normalize(direction);
-                var velocity = dirNormalized * followPlayerData.speed;
-                
-                // slow down when close
-                var distance = math.length(direction);
-                velocity *= math.smoothstep(followPlayerData.slowDownRange.x, followPlayerData.slowDownRange.y, distance);
-                velRef.ValueRW.Linear = velocity;
-                
-                // set animator
-                if (SystemAPI.ManagedAPI.HasComponent<Animator>(model.modelEntity)) {
-                    var animator = SystemAPI.ManagedAPI.GetComponent<Animator>(model.modelEntity);
-                    animator.SetFloat(k_Blend, math.length(velocity));
-                }
-                
-                // rotate towards
-                rotateTowardsData.ValueRW.direction = dirNormalized;
-            }
-        }
-    }
-}
 
-[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
-[UpdateAfter(typeof(PhysicsSystemGroup))] // We are updating after `PhysicsSimulationGroup` - this means that we will get the events of the current frame.
-public partial struct HitPlayerEventsSystem : ISystem
-{
-    // [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        // check if hit player
-        var hitPlayerJob = new HitPlayer {
-            damageDataLookup = SystemAPI.GetComponentLookup<FollowPlayerAuthor.FollowPlayerData>(),
-            healthDataLookup = SystemAPI.GetComponentLookup<HealthData>(),
-        };
-        var simulationSingleton = SystemAPI.GetSingleton<SimulationSingleton>();
-        state.Dependency = hitPlayerJob.Schedule(simulationSingleton, state.Dependency);
-    }
-}
+            var direction = playerPosition - ltRef.ValueRO.Position;
+            var dirNormalized = math.normalize(direction);
+            var velocity = dirNormalized * followPlayerData.speed;
 
+            // slow down when close
+            var distance = math.length(direction);
+            velocity *= math.smoothstep(followPlayerData.slowDownRange.x, followPlayerData.slowDownRange.y, distance);
+            velRef.ValueRW.Linear = velocity;
 
-// using collision job check if hit player
-struct HitPlayer : ITriggerEventsJob {
-    [ReadOnly] public ComponentLookup<FollowPlayerAuthor.FollowPlayerData> damageDataLookup;
-    public ComponentLookup<HealthData> healthDataLookup;
-    
-    public void Execute(TriggerEvent collisionEvent) {
-        var damageableEntity = Entity.Null;
-        var damagingEntity = Entity.Null;
-        if (damageDataLookup.HasComponent(collisionEvent.EntityA)) {
-            if (healthDataLookup.HasComponent(collisionEvent.EntityB)) {
-                damageableEntity = collisionEvent.EntityB;
-                damagingEntity = collisionEvent.EntityA;
+            // set animator
+            if (SystemAPI.ManagedAPI.HasComponent<Animator>(model.modelEntity))
+            {
+                var animator = SystemAPI.ManagedAPI.GetComponent<Animator>(model.modelEntity);
+                animator.SetFloat(k_Blend, math.length(velocity));
             }
+
+            // rotate towards
+            rotateTowardsData.ValueRW.direction = dirNormalized;
         }
-        if (damageableEntity == Entity.Null && damageDataLookup.HasComponent(collisionEvent.EntityB)) {
-            if (healthDataLookup.HasComponent(collisionEvent.EntityA)) {
-                damageableEntity = collisionEvent.EntityA;
-                damagingEntity = collisionEvent.EntityB;
-            }
-        }
-        if (damageableEntity == Entity.Null) return;
-        
-        // damage player by one
-        var healthData = healthDataLookup[damageableEntity];
-        if (healthData.hitInvincibilityTimer > 0) return;
-        healthData.health -= 1;
-        healthData.hitInvincibilityTimer = 1;
-        healthDataLookup[damageableEntity] = healthData;
     }
 }

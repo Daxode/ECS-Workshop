@@ -1,10 +1,12 @@
-﻿using Unity.Burst;
+﻿using System;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
-using BoxCollider = UnityEngine.BoxCollider;
+using UnityEngine.Rendering;
+using Random = Unity.Mathematics.Random;
 
 // Based on the EntitiesSample 'BakingDependencies' found here:
 // https://github.com/Unity-Technologies/EntityComponentSystemSamples/tree/master/EntitiesSamples/Assets/Baking/BakingDependencies
@@ -14,10 +16,13 @@ public class GrassFieldAuthor : MonoBehaviour
     [SerializeField] GameObject grassPrefab;
     [SerializeField] int grassCount = 100;
     [SerializeField] uint seed;
+
     [Range(-0.99f, 0.99f)]
     [SerializeField] float threshold;
+
     [Range(0.01f, 10f)]
     [SerializeField] float noiseScale;
+
     class Baker : Baker<GrassFieldAuthor>
     {
         public override void Bake(GrassFieldAuthor authoring)
@@ -26,19 +31,19 @@ public class GrassFieldAuthor : MonoBehaviour
             var meshRenderer = GetComponentInChildren<MeshRenderer>(authoring.grassPrefab);
             var meshFilter = GetComponent<MeshFilter>(meshRenderer);
             DependsOn(authoring.transform);
-            
+
             // return if any null
             if (boxCollider == null || meshRenderer == null || meshFilter == null)
                 return;
-            
+
             var mainEntity = GetEntity(TransformUsageFlags.None);
             var entities = AddBuffer<GrassEntity>(mainEntity);
             var size = ((float3)boxCollider.size).xz * ((float3)authoring.transform.localScale).xz * 0.5f;
-            var random = Unity.Mathematics.Random.CreateFromIndex(authoring.seed);
+            var random = Random.CreateFromIndex(authoring.seed);
             for (var i = 0; i < authoring.grassCount; i++)
             {
                 var entity = CreateAdditionalEntity(TransformUsageFlags.ManualOverride);
-                
+
                 // distribute grass randomly using perlin noise
                 var pos = random.NextFloat2(-size, size);
                 var noise = Unity.Mathematics.noise.snoise(pos * authoring.noiseScale);
@@ -47,12 +52,13 @@ public class GrassFieldAuthor : MonoBehaviour
                     pos = random.NextFloat2(-size, size);
                     noise = Unity.Mathematics.noise.snoise(pos * authoring.noiseScale);
                 }
+
                 var worldPosition = new Vector3(pos.x, 0, pos.y);
                 worldPosition += boxCollider.center + authoring.transform.position;
-                AddComponent(entity, new LocalToWorld{Value = float4x4.Translate(worldPosition)});
+                AddComponent(entity, new LocalToWorld { Value = float4x4.Translate(worldPosition) });
                 entities.Add(entity);
             }
-            
+
             AddComponentObject(mainEntity, new MeshArrayBakingType
             {
                 meshArray = new RenderMeshArray(new[] { meshRenderer.sharedMaterial }, new[] { meshFilter.sharedMesh })
@@ -72,8 +78,16 @@ public class MeshArrayBakingType : IComponentData
 public struct GrassEntity : IBufferElementData
 {
     Entity m_Value;
-    public static implicit operator Entity(GrassEntity e) => e.m_Value;
-    public static implicit operator GrassEntity(Entity e) => new() { m_Value = e };
+
+    public static implicit operator Entity(GrassEntity e)
+    {
+        return e.m_Value;
+    }
+
+    public static implicit operator GrassEntity(Entity e)
+    {
+        return new GrassEntity { m_Value = e };
+    }
 }
 
 [WorldSystemFilter(WorldSystemFilterFlags.BakingSystem)]
@@ -91,7 +105,7 @@ partial struct GrassScatterSystem : ISystem
 
     public void OnUpdate(ref SystemState state)
     {
-        var renderMeshDescription = new RenderMeshDescription(UnityEngine.Rendering.ShadowCastingMode.Off);
+        var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off);
         var materialMeshInfo = MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0);
         foreach (var entity in m_GrassEntitiesQuery.ToEntityArray(state.WorldUpdateAllocator))
         {
