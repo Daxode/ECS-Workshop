@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Random = Unity.Mathematics.Random;
 
-// Based on the EntitiesSample 'BakingDependencies' found here:
+// Mesh generation based on the EntitiesSample 'BakingDependencies' found here:
 // https://github.com/Unity-Technologies/EntityComponentSystemSamples/tree/master/EntitiesSamples/Assets/Baking/BakingDependencies
 [RequireComponent(typeof(BoxCollider))]
 public class GrassFieldAuthor : MonoBehaviour
@@ -78,16 +78,8 @@ public class MeshArrayBakingType : IComponentData
 public struct GrassEntity : IBufferElementData
 {
     Entity m_Value;
-
-    public static implicit operator Entity(GrassEntity e)
-    {
-        return e.m_Value;
-    }
-
-    public static implicit operator GrassEntity(Entity e)
-    {
-        return new GrassEntity { m_Value = e };
-    }
+    public static implicit operator Entity(GrassEntity e) => e.m_Value;
+    public static implicit operator GrassEntity(Entity e) => new() { m_Value = e };
 }
 
 [WorldSystemFilter(WorldSystemFilterFlags.BakingSystem)]

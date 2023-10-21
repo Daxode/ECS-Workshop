@@ -5,11 +5,16 @@ using Unity.Entities;
 using Unity.Physics;
 using Unity.Physics.Systems;
 
+struct AttackDamage : IComponentData
+{
+    public int damage;
+    public Entity owningEntity;
+}
+
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
 [UpdateAfter(typeof(PhysicsSystemGroup))]
-
 // We are updating after `PhysicsSimulationGroup` - this means that we will get the events of the current frame.
-public partial struct HitPlayerEventsSystem : ISystem
+partial struct HitPlayerEventsSystem : ISystem
 {
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
