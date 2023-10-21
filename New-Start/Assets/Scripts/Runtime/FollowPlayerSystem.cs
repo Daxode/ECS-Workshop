@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -15,11 +16,10 @@ partial struct FollowPlayerSystem : ISystem
 {
     static readonly int k_Blend = Animator.StringToHash("Blend");
 
-    public void OnCreate(ref SystemState state)
-    {
-        state.RequireForUpdate<PlayerMovementManaged>();
-    }
-
+    [BurstCompile]
+    public void OnCreate(ref SystemState state) 
+        => state.RequireForUpdate<PlayerMovementManaged>();
+    
     public void OnUpdate(ref SystemState state)
     {
         var playerEntity = SystemAPI.ManagedAPI.GetSingletonEntity<PlayerMovementManaged>();

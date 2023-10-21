@@ -18,21 +18,13 @@ class HealthManagedData : IComponentData
     public int lastHealthSpriteIndex;
 }
 
-partial struct HealthSystem : ISystem, ISystemStartStop
+partial struct HealthSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<HealthManagedData>();
-        state.RequireForUpdate<DashMovementSystem.UISingleton>();
+        state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<CanvasSystem.ManagedData>().WithOptions(EntityQueryOptions.IncludeSystems).Build());
     }
-
-    public void OnStartRunning(ref SystemState state)
-    {
-        var uiSingleton = SystemAPI.ManagedAPI.GetSingleton<DashMovementSystem.UISingleton>();
-        uiSingleton.healthBar = uiSingleton.uiDocument.rootVisualElement.Q("health");
-    }
-
-    public void OnStopRunning(ref SystemState state) {}
 
     public void OnUpdate(ref SystemState state)
     {
@@ -40,7 +32,7 @@ partial struct HealthSystem : ISystem, ISystemStartStop
         var ecb = SystemAPI
             .GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
 
-        var uiSingleton = SystemAPI.ManagedAPI.GetSingleton<DashMovementSystem.UISingleton>();
+        var canvasData = SystemAPI.ManagedAPI.GetSingleton<CanvasSystem.ManagedData>();
         foreach (var (healthManagedData, dataRef, e) in SystemAPI
                      .Query<HealthManagedData, RefRW<HealthData>>().WithEntityAccess())
         {
@@ -60,7 +52,7 @@ partial struct HealthSystem : ISystem, ISystemStartStop
             {
                 // display only if player
                 if (SystemAPI.ManagedAPI.HasComponent<PlayerMovementManaged>(e))
-                    uiSingleton.healthBar.style.backgroundImage =
+                    canvasData.healthBar.style.backgroundImage =
                         new StyleBackground(healthManagedData.healthSprites[healthSpriteIndex]);
                 healthManagedData.lastHealthSpriteIndex = healthSpriteIndex;
 

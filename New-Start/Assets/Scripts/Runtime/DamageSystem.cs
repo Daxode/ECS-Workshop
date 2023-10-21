@@ -40,8 +40,7 @@ partial struct HitPlayerEventsSystem : ISystem
 [BurstCompile]
 struct HitPlayer : ICollisionEventsJob
 {
-    [ReadOnly]
-    public ComponentLookup<AttackDamage> damageDataLookup;
+    [ReadOnly] public ComponentLookup<AttackDamage> damageDataLookup;
     public ComponentLookup<HealthData> healthDataLookup;
     public EntityCommandBuffer ecb;
 

@@ -25,14 +25,16 @@ public class DashMovementAuthor : MonoBehaviour
             AddComponentObject(entity, new DashMovementManaged
             {
                 dashInput = authoring.dashInput,
-                dashSpeed = authoring.dashSpeed,
-                dashInvincibilityDuration = authoring.dashInvincibilityDuration,
-                dashCooldown = authoring.dashCooldown,
                 staminaSprites = authoring.staminaSprites ?? Array.Empty<Sprite>(),
                 lastStaminaSpriteIndex = -1
             });
 
-            AddComponent<DashMovementData>(entity);
+            AddComponent(entity, new DashMovementData
+            {
+                dashSpeed = authoring.dashSpeed,
+                dashInvincibilityDuration = authoring.dashInvincibilityDuration,
+                dashCooldown = authoring.dashCooldown,
+            });
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Burst;
 using Unity.Entities;
 
 struct CleanupJoint : ICleanupComponentData
@@ -13,6 +14,7 @@ struct JointReference : IComponentData
 
 partial struct CleanupJointSystem : ISystem
 {
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         // Setup joints

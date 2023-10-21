@@ -1,5 +1,5 @@
 ﻿using System;
-using Unity.Collections;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
@@ -65,23 +65,6 @@ partial struct AnimationSystem : ISystem, ISystemStartStop
             Object.Destroy(animator.animatorToCleanup.gameObject, 2f);
             ecb.RemoveComponent<CleanupAnimation>(e);
         }
-
-        // if no leg but has children, add leg
-        foreach (var entity in SystemAPI.QueryBuilder().WithAll<Child>().WithNone<LinkedEntityGroup, Parent>()
-                     .Build().ToEntityArray(state.WorldUpdateAllocator))
-        {
-            var leg = state.EntityManager.AddBuffer<LinkedEntityGroup>(entity);
-            var childQueue = new NativeQueue<Entity>(state.WorldUpdateAllocator);
-            childQueue.Enqueue(entity);
-            while (childQueue.TryDequeue(out var parent))
-            {
-                leg.Add(parent);
-                if (!SystemAPI.HasBuffer<Child>(parent))
-                    continue;
-                foreach (var child in SystemAPI.GetBuffer<Child>(parent))
-                    childQueue.Enqueue(child.Value);
-            }
-        }
     }
 
 }
@@ -96,11 +79,13 @@ struct DrawInEditor : IComponentData
 [UpdateAfter(typeof(TransformSystemGroup))]
 partial struct SpawnToDrawInEditorSystem : ISystem, ISystemStartStop
 {
+    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<DrawInEditor>();
     }
 
+    [BurstCompile]
     public void OnStartRunning(ref SystemState state)
     {
         // ReSharper disable once Unity.Entities.SingletonMustBeRequested

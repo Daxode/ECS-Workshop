@@ -14,10 +14,8 @@ class PlayerTurnAroundManaged : IComponentData
 [UpdateAfter(typeof(PlayerMovementSystem))]
 partial struct PlayerTurnSystem : ISystem, ISystemStartStop
 {
-    public void OnCreate(ref SystemState state)
-    {
-        state.RequireForUpdate<PlayerTurnAroundManaged>();
-    }
+    public void OnCreate(ref SystemState state) 
+        => state.RequireForUpdate<PlayerTurnAroundManaged>();
 
     public void OnStartRunning(ref SystemState state)
     {

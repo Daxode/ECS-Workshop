@@ -15,10 +15,8 @@ partial struct PlayerMovementSystem : ISystem, ISystemStartStop
 {
     static readonly int k_Blend = Animator.StringToHash("Blend");
 
-    public void OnCreate(ref SystemState state)
-    {
-        state.RequireForUpdate<PlayerMovementManaged>();
-    }
+    public void OnCreate(ref SystemState state) 
+        => state.RequireForUpdate<PlayerMovementManaged>();
 
     public void OnStartRunning(ref SystemState state)
     {

@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -6,40 +7,41 @@ using Unity.Physics.Systems;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
 
 class DashMovementManaged : IComponentData
 {
-    public float dashCooldown;
     public InputAction dashInput;
-    public float dashInvincibilityDuration;
-    public float dashSpeed;
-    public int lastStaminaSpriteIndex;
     public Sprite[] staminaSprites;
+    public int lastStaminaSpriteIndex;
 }
 
 struct DashMovementData : IComponentData
 {
     public bool isDashing;
+    public float dashSpeed;
+    public float dashCooldown;
     public float dashCooldownTimer;
+    public float dashInvincibilityDuration;
 }
 
 // during physics update we dash
-[UpdateInGroup(typeof(PhysicsSystemGroup))]
+[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+[UpdateBefore(typeof(PhysicsSystemGroup))]
 partial struct DashMovementSystemPhysics : ISystem
 {
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (dashMovementRef, dashMovementManaged, velocityRef, healthData) in SystemAPI.Query<
-                     RefRW<DashMovementData>, DashMovementManaged, RefRW<PhysicsVelocity>,
-                     RefRW<HealthData>>())
+        foreach (var (dashMovementRef, velocityRef, healthData) in SystemAPI.Query<
+                     RefRW<DashMovementData>, RefRW<PhysicsVelocity>, RefRW<HealthData>>())
         {
-            if (!dashMovementRef.ValueRO.isDashing) continue;
+            var data = dashMovementRef.ValueRO;
+            if (!data.isDashing) continue;
             dashMovementRef.ValueRW.isDashing = false;
-            velocityRef.ValueRW.Linear.xz *= 1 + dashMovementManaged.dashSpeed;
-            dashMovementRef.ValueRW.dashCooldownTimer = dashMovementManaged.dashCooldown;
-            if (healthData.ValueRO.hitInvincibilityTimer > dashMovementManaged.dashInvincibilityDuration) continue;
-            healthData.ValueRW.hitInvincibilityTimer = dashMovementManaged.dashInvincibilityDuration;
+            velocityRef.ValueRW.Linear.xz *= 1 + data.dashSpeed;
+            dashMovementRef.ValueRW.dashCooldownTimer = data.dashCooldown;
+            if (healthData.ValueRO.hitInvincibilityTimer > data.dashInvincibilityDuration) continue;
+            healthData.ValueRW.hitInvincibilityTimer = data.dashInvincibilityDuration;
         }
     }
 }
@@ -47,30 +49,17 @@ partial struct DashMovementSystemPhysics : ISystem
 [UpdateAfter(typeof(FollowPlayerSystem))]
 partial struct DashMovementSystem : ISystem, ISystemStartStop
 {
-    public class UISingleton : IComponentData
-    {
-        public VisualElement healthBar;
-        public VisualElement staminaBar;
-        public UIDocument uiDocument;
-    }
-
+    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<DashMovementManaged>();
+        state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<CanvasSystem.ManagedData>().WithOptions(EntityQueryOptions.IncludeSystems).Build());
     }
 
     public void OnStartRunning(ref SystemState state)
     {
         foreach (var dashMovementManaged in SystemAPI.Query<DashMovementManaged>())
             dashMovementManaged.dashInput.Enable();
-
-        // create UI
-        var uiSingleton = new UISingleton
-        {
-            uiDocument = Object.FindObjectOfType<UIDocument>()
-        };
-        uiSingleton.staminaBar = uiSingleton.uiDocument.rootVisualElement.Q<VisualElement>("stamina");
-        state.EntityManager.AddComponentObject(state.SystemHandle, uiSingleton);
     }
 
     public void OnStopRunning(ref SystemState state)
@@ -81,19 +70,19 @@ partial struct DashMovementSystem : ISystem, ISystemStartStop
 
     public void OnUpdate(ref SystemState state)
     {
-        var uiSingleton = SystemAPI.ManagedAPI.GetSingleton<UISingleton>();
+        var canvasData = SystemAPI.ManagedAPI.GetSingleton<CanvasSystem.ManagedData>();
         foreach (var (dashMovementManaged, data) in SystemAPI.Query<DashMovementManaged, RefRW<DashMovementData>>())
         {
             // update UI
             var current = data.ValueRO.dashCooldownTimer;
-            var max = dashMovementManaged.dashCooldown;
+            var max = data.ValueRO.dashCooldown;
             var percentage = math.saturate(1 - current / max);
             var spriteIndex = (int)math.floor(percentage * (dashMovementManaged.staminaSprites.Length - 1));
             if (spriteIndex != dashMovementManaged.lastStaminaSpriteIndex)
             {
                 dashMovementManaged.lastStaminaSpriteIndex = spriteIndex;
                 var sprite = dashMovementManaged.staminaSprites[spriteIndex];
-                uiSingleton.staminaBar.style.backgroundImage = new StyleBackground(sprite);
+                canvasData.staminaBar.style.backgroundImage = new StyleBackground(sprite);
             }
 
             // update timers

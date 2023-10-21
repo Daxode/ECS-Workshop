@@ -1,15 +1,16 @@
 ﻿using System;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-public struct ModelForEntity : IComponentData
+struct ModelForEntity : IComponentData
 {
     public Entity modelEntity;
 }
 
-public struct RotateTowardsData : IComponentData
+struct RotateTowardsData : IComponentData
 {
     public float speed;
     public float3 direction;
@@ -17,6 +18,7 @@ public struct RotateTowardsData : IComponentData
 
 partial struct RotateTowardsSystem : ISystem
 {
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         var deltaTime = SystemAPI.Time.DeltaTime;
