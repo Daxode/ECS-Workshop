@@ -24,11 +24,13 @@ public class ShooterAuthor : MonoBehaviour
                 shotForce = authoring.shotForce,
                 shootLocationEntity = authoring.shotPos ? GetEntity(authoring.shotPos, TransformUsageFlags.Renderable) : entity
             });
-            AddComponentObject(entity, new ShooterManaged
-            {
-                shootInput = authoring.shootInput,
-                shootAltInput = authoring.shootAltInput
-            });
+            if (authoring.shootInput.bindings.Count > 0)
+                AddComponentObject(entity, new ShooterManaged
+                {
+                    shootInput = authoring.shootInput,
+                    shootAltInput = authoring.shootAltInput
+                });
+            SetComponentEnabled<Shooter>(entity, false);
         }
     }
 }

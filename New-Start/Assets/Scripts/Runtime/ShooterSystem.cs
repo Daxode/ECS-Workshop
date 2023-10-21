@@ -10,7 +10,7 @@ class ShooterManaged : IComponentData
     public InputAction shootInput;
 }
 
-struct Shooter : IComponentData
+struct Shooter : IComponentData, IEnableableComponent
 {
     public Entity projectile;
     public float shotForce;
@@ -23,14 +23,22 @@ partial struct ShooterSystem : ISystem, ISystemStartStop
     public void OnUpdate(ref SystemState state)
     {
         SystemAPI.ManagedAPI.TryGetSingleton<PlayerTurnAroundManaged>(out var turnsAround);
-        foreach (var (shooterRef, shooterManaged, shootingEntity) in SystemAPI.Query<RefRW<Shooter>, ShooterManaged>().WithEntityAccess())
+        foreach (var (shooterRef, shooterManaged) in 
+                 SystemAPI.Query<EnabledRefRW<Shooter>, ShooterManaged>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
             if (!(shooterManaged.shootInput.triggered || shooterManaged.shootAltInput.triggered)) continue;
 
             // if last press was alt, set turnsAround.followMouseInstead to true
             if (turnsAround != null)
                 turnsAround.followMouseInstead = shooterManaged.shootAltInput.triggered;
-
+            
+            shooterRef.ValueRW = true;
+        }
+        
+        foreach (var (shooterRef, enabled, shootingEntity) in SystemAPI.Query<RefRO<Shooter>, EnabledRefRW<Shooter>>().WithEntityAccess())
+        {
+            enabled.ValueRW = false;
+            
             // shoot
             var instance = state.EntityManager.Instantiate(shooterRef.ValueRO.projectile);
             var shootLtw = SystemAPI.GetComponent<LocalToWorld>(shooterRef.ValueRO.shootLocationEntity); // gets last frame's transform
