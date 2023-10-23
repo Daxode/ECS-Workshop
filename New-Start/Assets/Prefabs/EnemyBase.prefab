@@ -12,7 +12,7 @@ PrefabInstance:
         type: 3}
       propertyPath: animator
       value: 
-      objectReference: {fileID: 2441921970310086477, guid: 1b2ba32b5570b9742b988661869f4d09,
+      objectReference: {fileID: 1113782398737480659, guid: d3c1eb2a4c8a7ad4c868a3ecce05b803,
         type: 3}
     - target: {fileID: 3439606138494252657, guid: a3c1ad6516e30ae4880be370a5c57e47,
         type: 3}

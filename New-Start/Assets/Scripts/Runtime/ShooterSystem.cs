@@ -45,6 +45,8 @@ partial struct ShooterSystem : ISystem, ISystemStartStop
             SystemAPI.SetComponent(instance, LocalTransform.FromPosition(shootLtw.Position));
             SystemAPI.SetComponent(instance, new PhysicsVelocity { Linear = shootLtw.Forward * shooterRef.ValueRO.shotForce });
             SystemAPI.GetComponentRW<AttackDamage>(instance).ValueRW.owningEntity = shootingEntity;
+            if (SystemAPI.HasComponent<RotateTowardsData>(instance))
+                SystemAPI.SetComponent(instance, new RotateTowardsData { speed = 1f, direction = shootLtw.Forward });
         }
     }
 

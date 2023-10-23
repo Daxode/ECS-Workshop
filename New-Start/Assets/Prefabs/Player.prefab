@@ -95,7 +95,7 @@ PrefabInstance:
         type: 3}
       propertyPath: animator
       value: 
-      objectReference: {fileID: 7791049181742069613, guid: 27a6b0706bc6fdd4e97540b4a7d07997,
+      objectReference: {fileID: 7440556047930804248, guid: 5ffb7fb092d90454c9c62b986c387aeb,
         type: 3}
     - target: {fileID: 3439606138494252657, guid: a3c1ad6516e30ae4880be370a5c57e47,
         type: 3}
@@ -117,6 +117,12 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 6048831108459489531, guid: a3c1ad6516e30ae4880be370a5c57e47,
+        type: 3}
+      propertyPath: projectile
+      value: 
+      objectReference: {fileID: 6142236228325819887, guid: bb9754c78c274974cb462f6b537ced4a,
+        type: 3}
     - target: {fileID: 6048831108459489531, guid: a3c1ad6516e30ae4880be370a5c57e47,
         type: 3}
       propertyPath: shootInput.m_SingletonActionBindings.Array.size
@@ -462,4 +468,3 @@ MonoBehaviour:
       m_Action: Directional Input
       m_Flags: 8
     m_Flags: 0
-  speed: 5
