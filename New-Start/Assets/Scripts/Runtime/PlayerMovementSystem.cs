@@ -10,17 +10,6 @@ struct PlayerMovement : IComponentData
 
 partial struct PlayerMovementSystem : ISystem
 {
-    public void OnCreate(ref SystemState state)
-    {
-        var playerEntity = state.EntityManager.CreateEntity();
-        state.EntityManager.AddComponentData(playerEntity,  new PlayerMovement
-        {
-            speed = 1.0f
-        });
-        state.EntityManager.SetName(playerEntity, "Player");
-        state.EntityManager.AddComponentData(playerEntity, LocalTransform.Identity);
-    }
-
     public void OnUpdate(ref SystemState state)
     {
         foreach (var (playerMovementRef, localTransformRef) in SystemAPI.Query<RefRO<PlayerMovement>, RefRW<LocalTransform>>())
