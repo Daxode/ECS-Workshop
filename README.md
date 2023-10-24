@@ -1,10 +1,13 @@
 # ECS-Workshop
 Hi, welcome to the Workshop on ECS!
 
+# Heads-up: Repo will be updated until the day before (Oct. 24) @ 22:00
+
+
 ## Before the Workshop
 Ideally before the workshop you've:
-- Installed `Unity 2022.3.6f1`
-- Tried opening the project `/Course-of-a-Boat`
+- Installed `Unity 2022.3.11f1`
+- Tried opening the project `/New-Start`
   - (this ensures a quick project launch on the day)
 - Validate your IDE is type completing in the project
   - (If not, check `Edit > Preferences > External Tools` and select your editor, making sure to tick the black boxes)
