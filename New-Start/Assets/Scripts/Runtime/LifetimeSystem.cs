@@ -9,25 +9,6 @@ struct Lifetime : IComponentData
 
 partial struct LifetimeSystem : ISystem
 {
-    public void OnCreate(ref SystemState state)
-    {
-        // create projectile 1
-        var projectileEntity1 = state.EntityManager.CreateEntity();
-        state.EntityManager.AddComponentData(projectileEntity1, new Lifetime
-        {
-            timeLeft = 1.0f
-        });
-        state.EntityManager.SetName(projectileEntity1, "Projectile 1");
-        
-        // create another projectile
-        var projectileEntity2 = state.EntityManager.CreateEntity();
-        state.EntityManager.AddComponentData(projectileEntity2, new Lifetime
-        {
-            timeLeft = 2.0f
-        });
-        state.EntityManager.SetName(projectileEntity2, "Projectile 2");
-    }
-
     public void OnUpdate(ref SystemState state)
     {
         // create an entity command buffer to destroy entities
