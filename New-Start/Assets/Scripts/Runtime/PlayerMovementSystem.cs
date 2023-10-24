@@ -17,7 +17,6 @@ partial struct PlayerMovementSystem : ISystem
             var input = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
             var velocity = new float3(input.x, 0, input.y) * playerMovementRef.ValueRO.speed;
             localTransformRef.ValueRW.Position += velocity * SystemAPI.Time.DeltaTime;
-            Debug.Log($"Player position: {localTransformRef.ValueRW.Position}");
         }
     }
 }
