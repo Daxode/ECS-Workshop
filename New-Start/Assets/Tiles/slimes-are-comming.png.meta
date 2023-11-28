@@ -44,13 +44,13 @@ TextureImporter:
   lightmap: 0
   compressionQuality: 50
   spriteMode: 2
-  spriteExtrude: 1
-  spriteMeshType: 1
+  spriteExtrude: 0
+  spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 32
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
-  spriteGenerateFallbackPhysicsShape: 1
+  spriteGenerateFallbackPhysicsShape: 0
   alphaUsage: 1
   alphaIsTransparency: 1
   spriteTessellationDetail: -1
@@ -113,12 +113,12 @@ TextureImporter:
       name: slimes-are-comming_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 416
+        x: 2
+        y: 444
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -134,12 +134,12 @@ TextureImporter:
       name: slimes-are-comming_1
       rect:
         serializedVersion: 2
-        x: 32
-        y: 416
+        x: 36
+        y: 444
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -155,12 +155,12 @@ TextureImporter:
       name: slimes-are-comming_2
       rect:
         serializedVersion: 2
-        x: 64
-        y: 416
+        x: 70
+        y: 444
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -176,12 +176,12 @@ TextureImporter:
       name: slimes-are-comming_3
       rect:
         serializedVersion: 2
-        x: 96
-        y: 416
+        x: 104
+        y: 444
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -197,12 +197,12 @@ TextureImporter:
       name: slimes-are-comming_4
       rect:
         serializedVersion: 2
-        x: 128
-        y: 416
+        x: 138
+        y: 444
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -218,12 +218,12 @@ TextureImporter:
       name: slimes-are-comming_5
       rect:
         serializedVersion: 2
-        x: 160
-        y: 416
+        x: 172
+        y: 444
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -239,12 +239,12 @@ TextureImporter:
       name: slimes-are-comming_6
       rect:
         serializedVersion: 2
-        x: 192
-        y: 416
+        x: 206
+        y: 444
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -260,12 +260,12 @@ TextureImporter:
       name: slimes-are-comming_7
       rect:
         serializedVersion: 2
-        x: 224
-        y: 416
+        x: 240
+        y: 444
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -281,12 +281,12 @@ TextureImporter:
       name: slimes-are-comming_8
       rect:
         serializedVersion: 2
-        x: 0
-        y: 384
+        x: 2
+        y: 410
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -302,12 +302,12 @@ TextureImporter:
       name: slimes-are-comming_9
       rect:
         serializedVersion: 2
-        x: 32
-        y: 384
+        x: 36
+        y: 410
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -323,12 +323,12 @@ TextureImporter:
       name: slimes-are-comming_10
       rect:
         serializedVersion: 2
-        x: 64
-        y: 384
+        x: 70
+        y: 410
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -344,12 +344,12 @@ TextureImporter:
       name: slimes-are-comming_11
       rect:
         serializedVersion: 2
-        x: 96
-        y: 384
+        x: 104
+        y: 410
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -365,12 +365,12 @@ TextureImporter:
       name: slimes-are-comming_12
       rect:
         serializedVersion: 2
-        x: 128
-        y: 384
+        x: 138
+        y: 410
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -386,12 +386,12 @@ TextureImporter:
       name: slimes-are-comming_13
       rect:
         serializedVersion: 2
-        x: 160
-        y: 384
+        x: 172
+        y: 410
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -407,12 +407,12 @@ TextureImporter:
       name: slimes-are-comming_14
       rect:
         serializedVersion: 2
-        x: 192
-        y: 384
+        x: 206
+        y: 410
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -428,12 +428,12 @@ TextureImporter:
       name: slimes-are-comming_15
       rect:
         serializedVersion: 2
-        x: 224
-        y: 384
+        x: 240
+        y: 410
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -449,12 +449,12 @@ TextureImporter:
       name: slimes-are-comming_16
       rect:
         serializedVersion: 2
-        x: 0
-        y: 352
+        x: 2
+        y: 376
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -470,12 +470,12 @@ TextureImporter:
       name: slimes-are-comming_17
       rect:
         serializedVersion: 2
-        x: 32
-        y: 352
+        x: 36
+        y: 376
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -491,12 +491,12 @@ TextureImporter:
       name: slimes-are-comming_18
       rect:
         serializedVersion: 2
-        x: 64
-        y: 352
+        x: 70
+        y: 376
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -512,12 +512,12 @@ TextureImporter:
       name: slimes-are-comming_19
       rect:
         serializedVersion: 2
-        x: 96
-        y: 352
+        x: 104
+        y: 376
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -533,12 +533,12 @@ TextureImporter:
       name: slimes-are-comming_20
       rect:
         serializedVersion: 2
-        x: 128
-        y: 352
+        x: 138
+        y: 376
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -554,12 +554,12 @@ TextureImporter:
       name: slimes-are-comming_21
       rect:
         serializedVersion: 2
-        x: 160
-        y: 352
+        x: 172
+        y: 376
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -575,12 +575,12 @@ TextureImporter:
       name: slimes-are-comming_22
       rect:
         serializedVersion: 2
-        x: 192
-        y: 352
+        x: 206
+        y: 376
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -596,12 +596,12 @@ TextureImporter:
       name: slimes-are-comming_23
       rect:
         serializedVersion: 2
-        x: 224
-        y: 352
+        x: 240
+        y: 376
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -617,12 +617,12 @@ TextureImporter:
       name: slimes-are-comming_24
       rect:
         serializedVersion: 2
-        x: 0
-        y: 320
+        x: 2
+        y: 342
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -638,12 +638,12 @@ TextureImporter:
       name: slimes-are-comming_25
       rect:
         serializedVersion: 2
-        x: 32
-        y: 320
+        x: 36
+        y: 342
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -659,12 +659,12 @@ TextureImporter:
       name: slimes-are-comming_26
       rect:
         serializedVersion: 2
-        x: 64
-        y: 320
+        x: 70
+        y: 342
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -680,12 +680,12 @@ TextureImporter:
       name: slimes-are-comming_27
       rect:
         serializedVersion: 2
-        x: 96
-        y: 320
+        x: 104
+        y: 342
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -701,12 +701,12 @@ TextureImporter:
       name: slimes-are-comming_28
       rect:
         serializedVersion: 2
-        x: 128
-        y: 320
+        x: 138
+        y: 342
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -722,12 +722,12 @@ TextureImporter:
       name: slimes-are-comming_29
       rect:
         serializedVersion: 2
-        x: 160
-        y: 320
+        x: 172
+        y: 342
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -743,12 +743,12 @@ TextureImporter:
       name: slimes-are-comming_30
       rect:
         serializedVersion: 2
-        x: 192
-        y: 320
+        x: 206
+        y: 342
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -764,12 +764,12 @@ TextureImporter:
       name: slimes-are-comming_31
       rect:
         serializedVersion: 2
-        x: 224
-        y: 320
+        x: 240
+        y: 342
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -785,12 +785,12 @@ TextureImporter:
       name: slimes-are-comming_32
       rect:
         serializedVersion: 2
-        x: 0
-        y: 288
+        x: 2
+        y: 308
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -806,12 +806,12 @@ TextureImporter:
       name: slimes-are-comming_33
       rect:
         serializedVersion: 2
-        x: 32
-        y: 288
+        x: 36
+        y: 308
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -827,12 +827,12 @@ TextureImporter:
       name: slimes-are-comming_34
       rect:
         serializedVersion: 2
-        x: 64
-        y: 288
+        x: 70
+        y: 308
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -848,12 +848,12 @@ TextureImporter:
       name: slimes-are-comming_35
       rect:
         serializedVersion: 2
-        x: 96
-        y: 288
+        x: 104
+        y: 308
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -869,12 +869,12 @@ TextureImporter:
       name: slimes-are-comming_36
       rect:
         serializedVersion: 2
-        x: 128
-        y: 288
+        x: 138
+        y: 308
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -890,12 +890,12 @@ TextureImporter:
       name: slimes-are-comming_37
       rect:
         serializedVersion: 2
-        x: 160
-        y: 288
+        x: 172
+        y: 308
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -911,12 +911,12 @@ TextureImporter:
       name: slimes-are-comming_38
       rect:
         serializedVersion: 2
-        x: 192
-        y: 288
+        x: 206
+        y: 308
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -932,12 +932,12 @@ TextureImporter:
       name: slimes-are-comming_39
       rect:
         serializedVersion: 2
-        x: 224
-        y: 288
+        x: 240
+        y: 308
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -953,12 +953,12 @@ TextureImporter:
       name: slimes-are-comming_40
       rect:
         serializedVersion: 2
-        x: 0
-        y: 256
+        x: 2
+        y: 274
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -974,12 +974,12 @@ TextureImporter:
       name: slimes-are-comming_41
       rect:
         serializedVersion: 2
-        x: 32
-        y: 256
+        x: 36
+        y: 274
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -995,12 +995,12 @@ TextureImporter:
       name: slimes-are-comming_42
       rect:
         serializedVersion: 2
-        x: 64
-        y: 256
+        x: 70
+        y: 274
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1016,12 +1016,12 @@ TextureImporter:
       name: slimes-are-comming_43
       rect:
         serializedVersion: 2
-        x: 96
-        y: 256
+        x: 104
+        y: 274
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1037,12 +1037,12 @@ TextureImporter:
       name: slimes-are-comming_44
       rect:
         serializedVersion: 2
-        x: 128
-        y: 256
+        x: 138
+        y: 274
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1058,12 +1058,12 @@ TextureImporter:
       name: slimes-are-comming_45
       rect:
         serializedVersion: 2
-        x: 160
-        y: 256
+        x: 172
+        y: 274
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1079,12 +1079,12 @@ TextureImporter:
       name: slimes-are-comming_46
       rect:
         serializedVersion: 2
-        x: 192
-        y: 256
+        x: 206
+        y: 274
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1100,12 +1100,12 @@ TextureImporter:
       name: slimes-are-comming_47
       rect:
         serializedVersion: 2
-        x: 224
-        y: 256
+        x: 240
+        y: 274
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1121,12 +1121,12 @@ TextureImporter:
       name: slimes-are-comming_48
       rect:
         serializedVersion: 2
-        x: 0
-        y: 224
+        x: 2
+        y: 240
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1142,12 +1142,12 @@ TextureImporter:
       name: slimes-are-comming_49
       rect:
         serializedVersion: 2
-        x: 32
-        y: 224
+        x: 36
+        y: 240
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1163,12 +1163,12 @@ TextureImporter:
       name: slimes-are-comming_50
       rect:
         serializedVersion: 2
-        x: 64
-        y: 224
+        x: 70
+        y: 240
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1184,12 +1184,12 @@ TextureImporter:
       name: slimes-are-comming_51
       rect:
         serializedVersion: 2
-        x: 96
-        y: 224
+        x: 104
+        y: 240
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1205,12 +1205,12 @@ TextureImporter:
       name: slimes-are-comming_52
       rect:
         serializedVersion: 2
-        x: 128
-        y: 224
+        x: 138
+        y: 240
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1226,12 +1226,12 @@ TextureImporter:
       name: slimes-are-comming_53
       rect:
         serializedVersion: 2
-        x: 160
-        y: 224
+        x: 172
+        y: 240
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1247,12 +1247,12 @@ TextureImporter:
       name: slimes-are-comming_54
       rect:
         serializedVersion: 2
-        x: 192
-        y: 224
+        x: 206
+        y: 240
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1268,12 +1268,12 @@ TextureImporter:
       name: slimes-are-comming_55
       rect:
         serializedVersion: 2
-        x: 224
-        y: 224
+        x: 240
+        y: 240
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1289,12 +1289,12 @@ TextureImporter:
       name: slimes-are-comming_56
       rect:
         serializedVersion: 2
-        x: 0
-        y: 192
+        x: 2
+        y: 206
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1310,12 +1310,12 @@ TextureImporter:
       name: slimes-are-comming_57
       rect:
         serializedVersion: 2
-        x: 32
-        y: 192
+        x: 36
+        y: 206
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1331,12 +1331,12 @@ TextureImporter:
       name: slimes-are-comming_58
       rect:
         serializedVersion: 2
-        x: 64
-        y: 192
+        x: 70
+        y: 206
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1352,12 +1352,12 @@ TextureImporter:
       name: slimes-are-comming_59
       rect:
         serializedVersion: 2
-        x: 96
-        y: 192
+        x: 104
+        y: 206
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1373,12 +1373,12 @@ TextureImporter:
       name: slimes-are-comming_60
       rect:
         serializedVersion: 2
-        x: 128
-        y: 192
+        x: 138
+        y: 206
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1394,12 +1394,12 @@ TextureImporter:
       name: slimes-are-comming_61
       rect:
         serializedVersion: 2
-        x: 160
-        y: 192
+        x: 172
+        y: 206
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1415,12 +1415,12 @@ TextureImporter:
       name: slimes-are-comming_62
       rect:
         serializedVersion: 2
-        x: 192
-        y: 192
+        x: 206
+        y: 206
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1436,12 +1436,12 @@ TextureImporter:
       name: slimes-are-comming_63
       rect:
         serializedVersion: 2
-        x: 224
-        y: 192
+        x: 240
+        y: 206
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1457,12 +1457,12 @@ TextureImporter:
       name: slimes-are-comming_64
       rect:
         serializedVersion: 2
-        x: 0
-        y: 160
+        x: 2
+        y: 172
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1478,12 +1478,12 @@ TextureImporter:
       name: slimes-are-comming_65
       rect:
         serializedVersion: 2
-        x: 32
-        y: 160
+        x: 36
+        y: 172
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1499,12 +1499,12 @@ TextureImporter:
       name: slimes-are-comming_66
       rect:
         serializedVersion: 2
-        x: 64
-        y: 160
+        x: 70
+        y: 172
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1520,12 +1520,12 @@ TextureImporter:
       name: slimes-are-comming_67
       rect:
         serializedVersion: 2
-        x: 96
-        y: 160
+        x: 104
+        y: 172
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1541,12 +1541,12 @@ TextureImporter:
       name: slimes-are-comming_68
       rect:
         serializedVersion: 2
-        x: 128
-        y: 160
+        x: 138
+        y: 172
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1562,12 +1562,12 @@ TextureImporter:
       name: slimes-are-comming_69
       rect:
         serializedVersion: 2
-        x: 160
-        y: 160
+        x: 172
+        y: 172
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1583,12 +1583,12 @@ TextureImporter:
       name: slimes-are-comming_70
       rect:
         serializedVersion: 2
-        x: 192
-        y: 160
+        x: 206
+        y: 172
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1604,12 +1604,12 @@ TextureImporter:
       name: slimes-are-comming_71
       rect:
         serializedVersion: 2
-        x: 224
-        y: 160
+        x: 240
+        y: 172
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1625,12 +1625,12 @@ TextureImporter:
       name: slimes-are-comming_72
       rect:
         serializedVersion: 2
-        x: 0
-        y: 128
+        x: 2
+        y: 138
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1646,12 +1646,12 @@ TextureImporter:
       name: slimes-are-comming_73
       rect:
         serializedVersion: 2
-        x: 32
-        y: 128
+        x: 36
+        y: 138
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1667,12 +1667,12 @@ TextureImporter:
       name: slimes-are-comming_74
       rect:
         serializedVersion: 2
-        x: 64
-        y: 128
+        x: 70
+        y: 138
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1688,12 +1688,12 @@ TextureImporter:
       name: slimes-are-comming_75
       rect:
         serializedVersion: 2
-        x: 96
-        y: 128
+        x: 104
+        y: 138
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1709,12 +1709,12 @@ TextureImporter:
       name: slimes-are-comming_76
       rect:
         serializedVersion: 2
-        x: 128
-        y: 128
+        x: 138
+        y: 138
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1730,12 +1730,12 @@ TextureImporter:
       name: slimes-are-comming_77
       rect:
         serializedVersion: 2
-        x: 160
-        y: 128
+        x: 172
+        y: 138
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1751,12 +1751,12 @@ TextureImporter:
       name: slimes-are-comming_78
       rect:
         serializedVersion: 2
-        x: 192
-        y: 128
+        x: 206
+        y: 138
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1772,12 +1772,12 @@ TextureImporter:
       name: slimes-are-comming_79
       rect:
         serializedVersion: 2
-        x: 224
-        y: 128
+        x: 240
+        y: 138
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1793,12 +1793,12 @@ TextureImporter:
       name: slimes-are-comming_80
       rect:
         serializedVersion: 2
-        x: 0
-        y: 96
+        x: 2
+        y: 104
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1814,12 +1814,12 @@ TextureImporter:
       name: slimes-are-comming_81
       rect:
         serializedVersion: 2
-        x: 32
-        y: 96
+        x: 36
+        y: 104
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1835,12 +1835,12 @@ TextureImporter:
       name: slimes-are-comming_82
       rect:
         serializedVersion: 2
-        x: 64
-        y: 96
+        x: 70
+        y: 104
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1856,12 +1856,12 @@ TextureImporter:
       name: slimes-are-comming_83
       rect:
         serializedVersion: 2
-        x: 96
-        y: 96
+        x: 104
+        y: 104
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1877,12 +1877,12 @@ TextureImporter:
       name: slimes-are-comming_84
       rect:
         serializedVersion: 2
-        x: 128
-        y: 96
+        x: 138
+        y: 104
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1898,12 +1898,12 @@ TextureImporter:
       name: slimes-are-comming_85
       rect:
         serializedVersion: 2
-        x: 160
-        y: 96
+        x: 172
+        y: 104
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1919,12 +1919,12 @@ TextureImporter:
       name: slimes-are-comming_86
       rect:
         serializedVersion: 2
-        x: 192
-        y: 96
+        x: 206
+        y: 104
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1940,12 +1940,12 @@ TextureImporter:
       name: slimes-are-comming_87
       rect:
         serializedVersion: 2
-        x: 224
-        y: 96
+        x: 240
+        y: 104
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1961,12 +1961,12 @@ TextureImporter:
       name: slimes-are-comming_88
       rect:
         serializedVersion: 2
-        x: 0
-        y: 64
+        x: 2
+        y: 70
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1982,12 +1982,12 @@ TextureImporter:
       name: slimes-are-comming_89
       rect:
         serializedVersion: 2
-        x: 32
-        y: 64
+        x: 36
+        y: 70
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2003,12 +2003,12 @@ TextureImporter:
       name: slimes-are-comming_90
       rect:
         serializedVersion: 2
-        x: 64
-        y: 64
+        x: 70
+        y: 70
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2024,12 +2024,12 @@ TextureImporter:
       name: slimes-are-comming_91
       rect:
         serializedVersion: 2
-        x: 96
-        y: 64
+        x: 104
+        y: 70
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2045,12 +2045,12 @@ TextureImporter:
       name: slimes-are-comming_92
       rect:
         serializedVersion: 2
-        x: 128
-        y: 64
+        x: 138
+        y: 70
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2066,12 +2066,12 @@ TextureImporter:
       name: slimes-are-comming_93
       rect:
         serializedVersion: 2
-        x: 160
-        y: 64
+        x: 172
+        y: 70
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2087,12 +2087,12 @@ TextureImporter:
       name: slimes-are-comming_94
       rect:
         serializedVersion: 2
-        x: 192
-        y: 64
+        x: 206
+        y: 70
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2108,12 +2108,12 @@ TextureImporter:
       name: slimes-are-comming_95
       rect:
         serializedVersion: 2
-        x: 224
-        y: 64
+        x: 240
+        y: 70
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2129,12 +2129,12 @@ TextureImporter:
       name: slimes-are-comming_96
       rect:
         serializedVersion: 2
-        x: 0
-        y: 32
+        x: 2
+        y: 36
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2150,12 +2150,12 @@ TextureImporter:
       name: slimes-are-comming_97
       rect:
         serializedVersion: 2
-        x: 32
-        y: 32
+        x: 36
+        y: 36
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2171,12 +2171,12 @@ TextureImporter:
       name: slimes-are-comming_98
       rect:
         serializedVersion: 2
-        x: 64
-        y: 32
+        x: 70
+        y: 36
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2192,12 +2192,12 @@ TextureImporter:
       name: slimes-are-comming_99
       rect:
         serializedVersion: 2
-        x: 96
-        y: 32
+        x: 104
+        y: 36
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2213,12 +2213,12 @@ TextureImporter:
       name: slimes-are-comming_100
       rect:
         serializedVersion: 2
-        x: 128
-        y: 32
+        x: 138
+        y: 36
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2234,12 +2234,12 @@ TextureImporter:
       name: slimes-are-comming_101
       rect:
         serializedVersion: 2
-        x: 160
-        y: 32
+        x: 172
+        y: 36
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2255,12 +2255,12 @@ TextureImporter:
       name: slimes-are-comming_102
       rect:
         serializedVersion: 2
-        x: 192
-        y: 32
+        x: 206
+        y: 36
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2276,12 +2276,12 @@ TextureImporter:
       name: slimes-are-comming_103
       rect:
         serializedVersion: 2
-        x: 224
-        y: 32
+        x: 240
+        y: 36
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2297,12 +2297,12 @@ TextureImporter:
       name: slimes-are-comming_104
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
+        x: 2
+        y: 2
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2318,12 +2318,12 @@ TextureImporter:
       name: slimes-are-comming_105
       rect:
         serializedVersion: 2
-        x: 32
-        y: 0
+        x: 36
+        y: 2
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2339,12 +2339,12 @@ TextureImporter:
       name: slimes-are-comming_106
       rect:
         serializedVersion: 2
-        x: 64
-        y: 0
+        x: 70
+        y: 2
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2360,12 +2360,12 @@ TextureImporter:
       name: slimes-are-comming_107
       rect:
         serializedVersion: 2
-        x: 96
-        y: 0
+        x: 104
+        y: 2
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2381,12 +2381,12 @@ TextureImporter:
       name: slimes-are-comming_108
       rect:
         serializedVersion: 2
-        x: 128
-        y: 0
+        x: 138
+        y: 2
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2402,12 +2402,12 @@ TextureImporter:
       name: slimes-are-comming_109
       rect:
         serializedVersion: 2
-        x: 160
-        y: 0
+        x: 172
+        y: 2
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2423,12 +2423,12 @@ TextureImporter:
       name: slimes-are-comming_110
       rect:
         serializedVersion: 2
-        x: 192
-        y: 0
+        x: 206
+        y: 2
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -2444,12 +2444,12 @@ TextureImporter:
       name: slimes-are-comming_111
       rect:
         serializedVersion: 2
-        x: 224
-        y: 0
+        x: 240
+        y: 2
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []

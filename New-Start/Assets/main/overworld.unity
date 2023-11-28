@@ -204,7 +204,7 @@ MonoBehaviour:
     - {fileID: -164920946, guid: b3ded538870f6af44ab9303b657de248, type: 3}
     - {fileID: -1506880739, guid: b3ded538870f6af44ab9303b657de248, type: 3}
     - {fileID: -1986106900, guid: b3ded538870f6af44ab9303b657de248, type: 3}
-  spriteTargetPrefab: {fileID: 420291821458080101, guid: d7d0d19284da17c4e8ee68c7e67e840b,
+  spriteTargetPrefab: {fileID: 6576426475019674523, guid: d7d0d19284da17c4e8ee68c7e67e840b,
     type: 3}
 --- !u!4 &1014457879
 Transform:
