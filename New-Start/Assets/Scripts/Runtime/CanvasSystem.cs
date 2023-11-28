@@ -6,8 +6,6 @@ partial struct CanvasSystem : ISystem, ISystemStartStop
 {
     public class ManagedData : IComponentData
     {
-        public VisualElement healthBar;
-        public VisualElement staminaBar;
         public UIDocument uiDocument;
     }
     
@@ -16,14 +14,13 @@ partial struct CanvasSystem : ISystem, ISystemStartStop
 
     public void OnStartRunning(ref SystemState state)
     {
+        var doc = Object.FindObjectOfType<UIDocument>();
+        
         // create UI
-        var data = new ManagedData
-        {
-            uiDocument = Object.FindObjectOfType<UIDocument>()
-        };
-        data.staminaBar = data.uiDocument.rootVisualElement.Q<VisualElement>("stamina");
-        data.healthBar = data.uiDocument.rootVisualElement.Q<VisualElement>("health");
-        state.EntityManager.AddComponentObject(state.SystemHandle, data);
+        state.EntityManager.AddComponentObject(state.SystemHandle, new ManagedData 
+        { 
+            uiDocument = doc 
+        });
     }
 
     public void OnStopRunning(ref SystemState state) {}

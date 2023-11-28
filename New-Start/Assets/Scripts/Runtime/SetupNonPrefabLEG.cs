@@ -9,11 +9,16 @@ partial struct SetupNonPrefabLegSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         // if no leg but has children, add leg
-        foreach (var entity in SystemAPI.QueryBuilder().WithAll<Child>().WithNone<LinkedEntityGroup, Parent>()
+        foreach (var entity in SystemAPI.QueryBuilder()
+                     .WithNone<LinkedEntityGroup, Parent>()
+                     .WithAll<Child>()
                      .Build().ToEntityArray(state.WorldUpdateAllocator))
         {
+            // Add leg
             var leg = state.EntityManager.AddBuffer<LinkedEntityGroup>(entity);
-            var childQueue = new NativeQueue<Entity>(state.WorldUpdateAllocator);
+            
+            // Recursively add all children to leg
+            using var childQueue = new NativeQueue<Entity>(state.WorldUpdateAllocator);
             childQueue.Enqueue(entity);
             while (childQueue.TryDequeue(out var parent))
             {

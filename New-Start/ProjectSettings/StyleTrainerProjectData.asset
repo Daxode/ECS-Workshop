@@ -1,0 +1,230 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &1
+MonoBehaviour:
+  m_ObjectHideFlags: 53
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e07c9b2c97f84356bb2bfac29363e611, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_StyleTrainerData:
+    rid: 2754846626717368320
+  m_DefaultStyleData:
+    rid: 2754846626717368321
+  m_DefaultStyleVersion: 2023090802
+  m_DefaultStyles:
+  - rid: 2754846626717368616
+  - rid: 2754846626717368617
+  - rid: 2754846626717368618
+  m_AssetPath: 
+  m_PreviousProjectIDs: []
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 2754846626717368320
+      type: {class: StyleTrainerData, ns: Unity.Muse.StyleTrainer, asm: Unity.Muse.StyleTrainer}
+      data:
+        m_Guid: 42cfd62c-c5da-4813-8bf1-dc09fc9e1501
+        m_State: 5
+        m_Disposing: 0
+        m_Styles: []
+        m_Version: 202230001
+    - rid: 2754846626717368321
+      type: {class: StyleTrainerData, ns: Unity.Muse.StyleTrainer, asm: Unity.Muse.StyleTrainer}
+      data:
+        m_Guid: 00000000-0000-0000-0000-000000000000
+        m_State: 4
+        m_Disposing: 0
+        m_Styles:
+        - rid: 2754846626717368619
+        m_Version: 202230001
+    - rid: 2754846626717368616
+      type: {class: StyleData, ns: Unity.Muse.StyleTrainer, asm: Unity.Muse.StyleTrainer}
+      data:
+        m_Guid: c4a37424-aff2-4190-89ab-6b8f307bdaf4
+        m_State: 1
+        m_Disposing: 0
+        m_IsFallback: 0
+        m_Thumbnail:
+          rid: -2
+        m_Visible: 0
+        selectedCheckPointGUID: ab0d69da-7f0e-41b9-ab4f-0dbe2bf9614a
+        m_FavoriteCheckPointGUID: ab0d69da-7f0e-41b9-ab4f-0dbe2bf9614a
+        parentID: 00000000-0000-0000-0000-000000000000
+        m_ProjectID: de075932-fbb5-499c-b129-ba06b1c7b0df
+        m_TrainingSteps: 0
+        m_CheckPoints:
+        - m_Guid: ab0d69da-7f0e-41b9-ab4f-0dbe2bf9614a
+          m_State: 1
+          m_Disposing: 0
+          m_ProjectID: de075932-fbb5-499c-b129-ba06b1c7b0df
+          m_Name: Default Style (Animals)
+          m_Description: Style specialized on generating animals based on Happy Harvest
+            style.
+          parent_id: 00000000-0000-0000-0000-000000000000
+          m_TrainingSetData:
+            m_Guid: 
+            m_State: 0
+            m_Disposing: 0
+            m_TrainingSet: []
+            m_ProjectID: 
+          m_ValidationImagesData: []
+          m_TrainingSteps: 0
+        m_SampleOutputPrompts: []
+        m_TrainingSetData: []
+        m_Name: 
+        m_Description: 
+    - rid: 2754846626717368617
+      type: {class: StyleData, ns: Unity.Muse.StyleTrainer, asm: Unity.Muse.StyleTrainer}
+      data:
+        m_Guid: cb1bb903-4e91-4682-bff2-4671555e8f5d
+        m_State: 1
+        m_Disposing: 0
+        m_IsFallback: 0
+        m_Thumbnail:
+          rid: -2
+        m_Visible: 0
+        selectedCheckPointGUID: 9070f7e6-5f75-4809-b11e-6b27c0aa1139
+        m_FavoriteCheckPointGUID: 9070f7e6-5f75-4809-b11e-6b27c0aa1139
+        parentID: 00000000-0000-0000-0000-000000000000
+        m_ProjectID: de075932-fbb5-499c-b129-ba06b1c7b0df
+        m_TrainingSteps: 0
+        m_CheckPoints:
+        - m_Guid: 9070f7e6-5f75-4809-b11e-6b27c0aa1139
+          m_State: 1
+          m_Disposing: 0
+          m_ProjectID: de075932-fbb5-499c-b129-ba06b1c7b0df
+          m_Name: Default Style (Vegetation)
+          m_Description: Style specialized on generating vegetation based on Happy
+            Harvest style.
+          parent_id: 00000000-0000-0000-0000-000000000000
+          m_TrainingSetData:
+            m_Guid: 
+            m_State: 0
+            m_Disposing: 0
+            m_TrainingSet: []
+            m_ProjectID: 
+          m_ValidationImagesData: []
+          m_TrainingSteps: 0
+        m_SampleOutputPrompts: []
+        m_TrainingSetData: []
+        m_Name: 
+        m_Description: 
+    - rid: 2754846626717368618
+      type: {class: StyleData, ns: Unity.Muse.StyleTrainer, asm: Unity.Muse.StyleTrainer}
+      data:
+        m_Guid: b2ff9ced-9904-443a-9826-0e12146f16e2
+        m_State: 1
+        m_Disposing: 0
+        m_IsFallback: 0
+        m_Thumbnail:
+          rid: -2
+        m_Visible: 0
+        selectedCheckPointGUID: da6e2c60-1038-450f-b56f-c105032fce12
+        m_FavoriteCheckPointGUID: da6e2c60-1038-450f-b56f-c105032fce12
+        parentID: 00000000-0000-0000-0000-000000000000
+        m_ProjectID: de075932-fbb5-499c-b129-ba06b1c7b0df
+        m_TrainingSteps: 0
+        m_CheckPoints:
+        - m_Guid: da6e2c60-1038-450f-b56f-c105032fce12
+          m_State: 1
+          m_Disposing: 0
+          m_ProjectID: de075932-fbb5-499c-b129-ba06b1c7b0df
+          m_Name: Default Style (Buildings)
+          m_Description: Style specialized on generating buildings based on Happy
+            Harvest style.
+          parent_id: 00000000-0000-0000-0000-000000000000
+          m_TrainingSetData:
+            m_Guid: 
+            m_State: 0
+            m_Disposing: 0
+            m_TrainingSet: []
+            m_ProjectID: 
+          m_ValidationImagesData: []
+          m_TrainingSteps: 0
+        m_SampleOutputPrompts: []
+        m_TrainingSetData: []
+        m_Name: 
+        m_Description: 
+    - rid: 2754846626717368619
+      type: {class: StyleData, ns: Unity.Muse.StyleTrainer, asm: Unity.Muse.StyleTrainer}
+      data:
+        m_Guid: 5cc104e0-423a-473e-8034-b9d346cb2357
+        m_State: 1
+        m_Disposing: 0
+        m_IsFallback: 0
+        m_Thumbnail:
+          rid: -2
+        m_Visible: 1
+        selectedCheckPointGUID: 00000000-0000-0000-0000-000000000000
+        m_FavoriteCheckPointGUID: active
+        parentID: 00000000-0000-0000-0000-000000000000
+        m_ProjectID: 11000000-0000-0000-0000-000000000011
+        m_TrainingSteps: 0
+        m_CheckPoints:
+        - m_Guid: 03fa404b-39fc-4979-9272-deb5d8c4b24c
+          m_State: 1
+          m_Disposing: 0
+          m_ProjectID: 11000000-0000-0000-0000-000000000011
+          m_Name: Happy Harvest [Orion V4 2000]
+          m_Description: 8 Nov 2023
+          parent_id: 00000000-0000-0000-0000-000000000000
+          m_TrainingSetData:
+            m_Guid: 3e758588-960f-44f5-865a-d5eaa1b1dec4
+            m_State: 5
+            m_Disposing: 0
+            m_TrainingSet: []
+            m_ProjectID: 11000000-0000-0000-0000-000000000011
+          m_ValidationImagesData:
+          - m_Guid: 96b39a19-2d3e-4bc5-aa3c-38667ed6eba5
+            m_State: 5
+            m_Disposing: 0
+            m_ImageArtifact:
+              m_Guid: 96b39a19-2d3e-4bc5-aa3c-38667ed6eba5
+              m_State: 5
+              m_Disposing: 0
+            m_Prompt: A chicken
+          - m_Guid: 05de072c-ebbc-43d7-886b-7ac4f9cbd079
+            m_State: 5
+            m_Disposing: 0
+            m_ImageArtifact:
+              m_Guid: 05de072c-ebbc-43d7-886b-7ac4f9cbd079
+              m_State: 5
+              m_Disposing: 0
+            m_Prompt: A cow
+          - m_Guid: 2dbfc212-f87b-45f9-a05a-06368e190ca1
+            m_State: 5
+            m_Disposing: 0
+            m_ImageArtifact:
+              m_Guid: 2dbfc212-f87b-45f9-a05a-06368e190ca1
+              m_State: 5
+              m_Disposing: 0
+            m_Prompt: A dog
+          - m_Guid: e0139464-a868-402a-95b8-b4c26685a97b
+            m_State: 5
+            m_Disposing: 0
+            m_ImageArtifact:
+              m_Guid: e0139464-a868-402a-95b8-b4c26685a97b
+              m_State: 5
+              m_Disposing: 0
+            m_Prompt: A farmer
+          - m_Guid: 4421bead-a3ff-4c09-9514-61e127eb470e
+            m_State: 5
+            m_Disposing: 0
+            m_ImageArtifact:
+              m_Guid: 4421bead-a3ff-4c09-9514-61e127eb470e
+              m_State: 5
+              m_Disposing: 0
+            m_Prompt: A pine tree
+          m_TrainingSteps: 100
+        m_SampleOutputPrompts: []
+        m_TrainingSetData: []
+        m_Name: 
+        m_Description: 

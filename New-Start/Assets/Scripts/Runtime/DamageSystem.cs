@@ -101,7 +101,8 @@ struct HitPlayer : ICollisionEventsJob
 
         // damage target
         healthData.health -= damageData.damage;
-        healthData.hitInvincibilityTimer = 1;
+        healthData.hitInvincibilityTimer = 1f;
+        healthData.hitIsTriggered = true;
         healthDataLookup[healthEntity] = healthData;
     }
 }
