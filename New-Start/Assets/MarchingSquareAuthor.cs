@@ -1,4 +1,5 @@
-﻿using System;
+﻿// #define DEBUG_DRAW_CAVE_GRID
+using System;
 using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -130,6 +131,8 @@ public enum CaveMaterialType
     Water,
 }
 
+
+[WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
 public partial struct CaveGridSystem : ISystem, ISystemStartStop
 {
     public struct Singleton : IComponentData
@@ -152,18 +155,20 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
             var y = i / Singleton.CaveGridWidth;
             
             // generate cave grid
-            var water = math.select(0, (int)CaveMaterialType.Water, noise.cnoise(new float2(x, -y)*0.1f)>0.4f);
-            var ore = math.select(0, (int)CaveMaterialType.Ore, noise.cnoise(new float3(x, -y, 0.2f)*0.1f)>0.2f);
-            var air = math.select(0, (int)CaveMaterialType.Air, noise.cnoise(new float3(x, -y, 0.4f)*0.1f)>0.3f);
-            air = math.max(air, y == 0 ? (int)CaveMaterialType.Air : (int)CaveMaterialType.Rock);
-            caveGrid[i] = (CaveMaterialType) math.min(math.max(water, ore), air);
-            
+            var water = math.select(0, (int)CaveMaterialType.Water, noise.cnoise(new float2(x, -y)*0.1f)>0.4f);     // water
+            var ore = math.select(0, (int)CaveMaterialType.Ore, noise.cnoise(new float3(x, -y, 0.3f)*0.1f)>0.2f); // ore
+            var air = math.select(0, (int)CaveMaterialType.Air, noise.cnoise(new float3(x, -y, 0.6f)*0.1f)>0.3f); // air
+            air = math.max(air, y is 0 or 1 && x is 6 or 7 ? (int)CaveMaterialType.Air : (int)CaveMaterialType.Rock);       // cave entrance
+            caveGrid[i] = (CaveMaterialType) math.max(math.max(water, ore), air);
+
+#if DEBUG_DRAW_CAVE_GRID
             // Debug draw the cave grid
             Debug.DrawLine(
                 new float3(x, -y, 0), 
                 new float3(x, -y, 0) + math.forward(), 
                 Color.HSVToRGB((float)caveGrid[i]/4f,1,1), 
                 100f);
+#endif
         }
         
         state.RequireForUpdate<MarchSquareData>();
@@ -222,7 +227,6 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
             corners = 1 - (int4) math.saturate(corners);
             var valCombined = corners.x | (corners.y << 1) | (corners.z << 2) | (corners.w << 3);
             offsetXYScaleZwRef.ValueRW.Value.xy = marchSquareSets[math.clamp(highestCorners.w-1, 0, marchSquareSets.Length-1)].GetOffset(valCombined);
-            
         }
         
         // update mat B tile (same as mat A, but with the second highest corner)

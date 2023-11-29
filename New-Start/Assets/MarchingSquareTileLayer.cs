@@ -16,7 +16,7 @@ public class MarchingSquareTileLayer : MonoBehaviour
     }
 }
 
-class SpriteBaker : Baker<MarchingSquareTileLayer>
+class MarchingSquareTileLayerBaker : Baker<MarchingSquareTileLayer>
 {
     public override void Bake(MarchingSquareTileLayer authoring)
     {

@@ -5,30 +5,31 @@ using Unity.Transforms;
 
 struct SpawnerData : IComponentData
 {
-    public Entity enemyPrefab;
+    public Entity prefab;
     public float spawnInterval;
     public float spawnTimer;
 }
 
-public partial struct EnemySpawner : ISystem
+public partial struct SpawnSystem : ISystem
 {
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var dataRef in SystemAPI.Query<RefRW<SpawnerData>>())
+        foreach (var (dataRef, ltw) in SystemAPI.Query<RefRW<SpawnerData>, LocalToWorld>())
         {
             if (dataRef.ValueRO.spawnTimer > 0)
                 dataRef.ValueRW.spawnTimer -= SystemAPI.Time.DeltaTime;
             else
             {
                 dataRef.ValueRW.spawnTimer = dataRef.ValueRO.spawnInterval;
-                var instance = state.EntityManager.Instantiate(dataRef.ValueRO.enemyPrefab);
+                var instance = state.EntityManager.Instantiate(dataRef.ValueRO.prefab);
                 SystemAPI.SetComponent(instance, new LocalTransform
                 {
-                    Position = new float3(0, 0, 0),
+                    Position = ltw.Position,
                     Rotation = quaternion.identity,
                     Scale = 1
                 });
+                SystemAPI.SetComponent(instance, ltw);
             }
         }
     }
