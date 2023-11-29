@@ -200,6 +200,7 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
         var marchSquareSets = SystemAPI.GetSingletonBuffer<MarchSquareSet>();
         var caveGrid = SystemAPI.GetComponent<Singleton>(state.SystemHandle).CaveGrid.AsArray();
         
+        // update outline tile
         foreach (var (lt, offsetXYScaleZwRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>>().WithAll<MarchingSquareTileCarverTag>())
         {
             var corners = GetCornerValues((int2)lt.Position.xy, caveGrid);
@@ -210,6 +211,7 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
             offsetXYScaleZwRef.ValueRW.Value.xy = marchSquareSets[0].GetOffset(valCombined);
         }
         
+        // update mat A tile (the one with the highest corner)
         foreach (var (lt, offsetXYScaleZwRef, cornerStrengthRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>, RefRW<MaterialOverrideCornerStrength>>().WithAll<MarchingSquareTileMatATag>())
         {
             var corners = GetCornerValues((int2)lt.Position.xy, caveGrid);
@@ -223,6 +225,7 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
             
         }
         
+        // update mat B tile (same as mat A, but with the second highest corner)
         foreach (var (lt, offsetXYScaleZwRef, cornerStrengthRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>, RefRW<MaterialOverrideCornerStrength>>().WithAll<MarchingSquareTileMatBTag>())
         {
             var corners = GetCornerValues((int2)lt.Position.xy, caveGrid);
