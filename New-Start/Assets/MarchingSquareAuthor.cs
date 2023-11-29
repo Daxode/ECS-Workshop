@@ -8,7 +8,6 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-
 class MarchingSquareAuthor : MonoBehaviour
 {
     public MarchSquareSetSprites[] sets;
@@ -93,41 +92,99 @@ class MarchingSquareBaker : Baker<MarchingSquareAuthor>
     }
 }
 
-partial struct MarchSquareSystem : ISystem, ISystemStartStop
+[UpdateBefore(typeof(CaveGridSystem))]
+partial struct DebugDrawingSystem : ISystem
 {
-    NativeArray<int> marchSquareLookup;
-    static readonly int2 k_MarchSquareLookupSize = new (20, 128);
-    
+    public void OnCreate(ref SystemState state) 
+        => state.RequireForUpdate<CaveGridSystem.Singleton>();
+
+    public void OnUpdate(ref SystemState state)
+    {
+        var caveGrid = SystemAPI.GetSingletonRW<CaveGridSystem.Singleton>().ValueRW.CaveGrid.AsArray();
+        var camera = Camera.main;
+        if (camera == null) return;
+        
+        // draw on the cave grid
+        if (Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1))
+        {
+            var mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
+            var mousePosInt = (int2) (math.round(((float3)mousePos).xy+new float2(0.5f, -0.5f)));
+            var i = mousePosInt.x + -mousePosInt.y * CaveGridSystem.Singleton.CaveGridWidth;
+            if (Input.GetKey(KeyCode.LeftShift))
+                caveGrid[i] = Input.GetKey(KeyCode.Mouse0) ? CaveMaterialType.Water : CaveMaterialType.Ore;
+            else
+                caveGrid[i] = Input.GetKey(KeyCode.Mouse0) ? CaveMaterialType.Air : CaveMaterialType.Rock;
+        }
+        
+        // camera y up/down from scroll
+        if (Input.mouseScrollDelta != Vector2.zero) 
+            camera.transform.position += new Vector3(0, Input.mouseScrollDelta.y, 0);
+    }
+}
+
+public enum CaveMaterialType
+{
+    Rock,
+    Air,
+    Ore,
+    Water,
+}
+
+public partial struct CaveGridSystem : ISystem, ISystemStartStop
+{
+    public struct Singleton : IComponentData
+    {
+        public NativeList<CaveMaterialType> CaveGrid;
+        public const int CaveGridWidth = 20;
+        public int GetCaveGridHeight() => CaveGrid.Length / CaveGridWidth;
+    }
+
+    // Generate the cave grid
+    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        marchSquareLookup = new NativeArray<int>(k_MarchSquareLookupSize.x * k_MarchSquareLookupSize.y, Allocator.Persistent);
-        for (int i = 0; i < marchSquareLookup.Length; i++)
+        var caveGrid = new NativeList<CaveMaterialType>(Singleton.CaveGridWidth * 128, Allocator.Persistent);
+        state.EntityManager.AddComponentData(state.SystemHandle, new Singleton { CaveGrid = caveGrid, });
+        caveGrid.Length = caveGrid.Capacity;
+        for (var i = 0; i < caveGrid.Length; i++)
         {
-            var x = i % k_MarchSquareLookupSize.x;
-            var y = i / k_MarchSquareLookupSize.x;
-            var water = math.select(0, 3, noise.cnoise(new float2(x, -y)*0.1f)>0.4f);
-            var ore = math.select(0, 2, noise.cnoise(new float3(x, -y, 0.2f)*0.1f)>0.2f);
-            var air = math.select(0, 1, noise.cnoise(new float3(x, -y, 0.4f)*0.1f)>0.3f);
-            marchSquareLookup[i] = math.min(math.max(water, ore), air);
+            var x = i % Singleton.CaveGridWidth;
+            var y = i / Singleton.CaveGridWidth;
             
-            Debug.DrawLine(new float3(x, -y, 0), new float3(x, -y, 0) + new float3(0, 0, marchSquareLookup[i]), Color.red, 100f);
+            // generate cave grid
+            var water = math.select(0, (int)CaveMaterialType.Water, noise.cnoise(new float2(x, -y)*0.1f)>0.4f);
+            var ore = math.select(0, (int)CaveMaterialType.Ore, noise.cnoise(new float3(x, -y, 0.2f)*0.1f)>0.2f);
+            var air = math.select(0, (int)CaveMaterialType.Air, noise.cnoise(new float3(x, -y, 0.4f)*0.1f)>0.3f);
+            air = math.max(air, y == 0 ? (int)CaveMaterialType.Air : (int)CaveMaterialType.Rock);
+            caveGrid[i] = (CaveMaterialType) math.min(math.max(water, ore), air);
+            
+            // Debug draw the cave grid
+            Debug.DrawLine(
+                new float3(x, -y, 0), 
+                new float3(x, -y, 0) + math.forward(), 
+                Color.HSVToRGB((float)caveGrid[i]/4f,1,1), 
+                100f);
         }
+        
         state.RequireForUpdate<MarchSquareData>();
     }
 
+    [BurstCompile]
     public void OnDestroy(ref SystemState state)
     {
-        marchSquareLookup.Dispose();
+        SystemAPI.GetComponent<Singleton>(state.SystemHandle).CaveGrid.Dispose();
     }
 
+    // Spawn the tiles
+    [BurstCompile]
     public void OnStartRunning(ref SystemState state)
     {
         var spriteTargetPrefab = SystemAPI.GetSingleton<MarchSquareData>().spriteTargetPrefab;
+        var caveGridHeight = SystemAPI.GetComponent<Singleton>(state.SystemHandle).GetCaveGridHeight();
         
-        // loop over 2x2 points
-        for (int y = 0; y > -k_MarchSquareLookupSize.y + 1; y--)
+        for (var y = 0; y > -caveGridHeight + 1; y--)
         {
-            for (int x = 0; x < k_MarchSquareLookupSize.x - 1; x++)
+            for (var x = 0; x < Singleton.CaveGridWidth - 1; x++)
             {
                 // spawn a sprite with the correct offset
                 var spriteTarget = state.EntityManager.Instantiate(spriteTargetPrefab);
@@ -136,13 +193,16 @@ partial struct MarchSquareSystem : ISystem, ISystemStartStop
         }
     }
 
-    //[BurstCompile]
+    // Update the tiles
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         var marchSquareSets = SystemAPI.GetSingletonBuffer<MarchSquareSet>();
+        var caveGrid = SystemAPI.GetComponent<Singleton>(state.SystemHandle).CaveGrid.AsArray();
+        
         foreach (var (lt, offsetXYScaleZwRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>>().WithAll<MarchingSquareTileCarverTag>())
         {
-            var corners = GetCornerValues((int2)lt.Position.xy);
+            var corners = GetCornerValues((int2)lt.Position.xy, caveGrid);
 
             // build a 4-bit value from the 4 corners
             corners = 1 - (int4) math.saturate(corners);
@@ -152,7 +212,7 @@ partial struct MarchSquareSystem : ISystem, ISystemStartStop
         
         foreach (var (lt, offsetXYScaleZwRef, cornerStrengthRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>, RefRW<MaterialOverrideCornerStrength>>().WithAll<MarchingSquareTileMatATag>())
         {
-            var corners = GetCornerValues((int2)lt.Position.xy);
+            var corners = GetCornerValues((int2)lt.Position.xy, caveGrid);
             var highestCorners = SortTheFourNumbers(corners);
             cornerStrengthRef.ValueRW.Value = (float4) (corners == highestCorners.w);
             
@@ -165,9 +225,10 @@ partial struct MarchSquareSystem : ISystem, ISystemStartStop
         
         foreach (var (lt, offsetXYScaleZwRef, cornerStrengthRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>, RefRW<MaterialOverrideCornerStrength>>().WithAll<MarchingSquareTileMatBTag>())
         {
-            var corners = GetCornerValues((int2)lt.Position.xy);
+            var corners = GetCornerValues((int2)lt.Position.xy, caveGrid);
             var highestCorners = SortTheFourNumbers(corners);
             
+            // get the second highest corner
             var validSecond = 0;
             if (highestCorners.w != highestCorners.z)
                 validSecond = highestCorners.z;
@@ -176,6 +237,7 @@ partial struct MarchSquareSystem : ISystem, ISystemStartStop
             else if (highestCorners.w != highestCorners.x)
                 validSecond = highestCorners.x;
             
+            // if there is no second highest corner, then there is no corner
             if (validSecond == 0)
                 cornerStrengthRef.ValueRW.Value = 0;
             else
@@ -186,57 +248,36 @@ partial struct MarchSquareSystem : ISystem, ISystemStartStop
             var valCombined = corners.x | (corners.y << 1) | (corners.z << 2) | (corners.w << 3);
             offsetXYScaleZwRef.ValueRW.Value.xy = marchSquareSets[math.clamp(validSecond-1, 0, marchSquareSets.Length-1)].GetOffset(valCombined);
         }
-
-        if (Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1))
-        {
-            var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            var mousePosInt = (int2) (math.round(((float3)mousePos).xy+new float2(0.5f, -0.5f)));
-            var i = mousePosInt.x + -mousePosInt.y * k_MarchSquareLookupSize.x;
-            if (Input.GetKey(KeyCode.LeftShift))
-                marchSquareLookup[i] = math.select(2, 3, Input.GetKey(KeyCode.Mouse0));
-            else
-                marchSquareLookup[i] = math.select(0, 1, Input.GetKey(KeyCode.Mouse0));
-        }
-        
-        // camera y up/down from scroll
-        if (Input.mouseScrollDelta != Vector2.zero)
-        {
-            var camera = Camera.main;
-            camera.transform.position += new Vector3(0, Input.mouseScrollDelta.y, 0);
-        }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // Sort the 4 numbers from lowest to highest (lowest in x, highest in w)
     static int4 SortTheFourNumbers(int4 val)
     {
-        var lowhigh1 = new int2();
-        var lowhigh2 = new int2();
-        var lowestmiddle1 = new int2();
-        var middle2highest = new int2();
-        
-        lowhigh1 = math.select(val.yx, val.xy, val.x < val.y);
-        lowhigh2 = math.select(val.wz, val.zw, val.z < val.w);
-        lowestmiddle1 = math.select(new int2(lowhigh2.x, lowhigh1.x), new int2(lowhigh1.x, lowhigh2.x), lowhigh1.x < lowhigh2.x);
-        middle2highest = math.select(new int2(lowhigh2.y, lowhigh1.y), new int2(lowhigh1.y, lowhigh2.y), lowhigh1.y < lowhigh2.y);
+        var lowHigh1 = math.select(val.yx, val.xy, val.x < val.y);
+        var lowHigh2 = math.select(val.wz, val.zw, val.z < val.w);
+        var lowestMiddle1 = math.select(new int2(lowHigh2.x, lowHigh1.x), new int2(lowHigh1.x, lowHigh2.x), lowHigh1.x < lowHigh2.x);
+        var middle2Highest = math.select(new int2(lowHigh2.y, lowHigh1.y), new int2(lowHigh1.y, lowHigh2.y), lowHigh1.y < lowHigh2.y);
 
         return math.select(
-            new int4(lowestmiddle1.x,middle2highest.x, lowestmiddle1.y, middle2highest.y), 
-            new int4(lowestmiddle1, middle2highest), 
-            lowestmiddle1.y < middle2highest.x);
+            new int4(lowestMiddle1.x,middle2Highest.x, lowestMiddle1.y, middle2Highest.y), 
+            new int4(lowestMiddle1, middle2Highest), 
+            lowestMiddle1.y < middle2Highest.x);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    int4 GetCornerValues(int2 coord)
+    int4 GetCornerValues(int2 coord, NativeArray<CaveMaterialType> caveGrid)
     {
         // assert that y is negative or ground level. As we're going from top to bottom, y should be negative
         if (coord.y > 0) throw new Exception("y must be negative");
 
         // get the 4 corners
-        var i = coord.x + -coord.y * k_MarchSquareLookupSize.x;
+        var i = coord.x + -coord.y * Singleton.CaveGridWidth;
         return new int4(
-            marchSquareLookup[i + k_MarchSquareLookupSize.x], // Bottom Left
-            marchSquareLookup[i + k_MarchSquareLookupSize.x + 1], // Bottom Right
-            marchSquareLookup[i + 1], // Top Right
-            marchSquareLookup[i] // Top Left
+            (int)caveGrid[i + Singleton.CaveGridWidth], // Bottom Left
+            (int)caveGrid[i + Singleton.CaveGridWidth + 1], // Bottom Right
+            (int)caveGrid[i + 1], // Top Right
+            (int)caveGrid[i] // Top Left
         );
     }
 
