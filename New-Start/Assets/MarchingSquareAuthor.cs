@@ -138,10 +138,7 @@ partial struct DebugDrawingSystem : ISystem
             if (Input.GetKey(KeyCode.Mouse0) && !Input.GetKey(KeyCode.LeftShift))
             {
                 pathEnd = i;
-                if (Pathfinder.FindShortestPath(ref pathfinder, caveGrid, pathStart, pathEnd, ref path))
-                    Debug.Log($"Found path from {pathStart} to {pathEnd} of length {path.Length}");
-                else
-                    Debug.Log($"No path found from {pathStart} to {pathEnd}");
+                bool foundPath = Pathfinder.FindShortestPath(ref pathfinder, caveGrid, pathStart, pathEnd, ref path);
             }
         }
         
