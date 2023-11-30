@@ -97,16 +97,16 @@ class MarchingSquareBaker : Baker<MarchingSquareAuthor>
 partial struct DebugDrawingSystem : ISystem
 {
     private Pathfinder pathfinder;
-    private int pathStart;
-    private int pathEnd;
-    private NativeList<int> path;
+    private GridNode pathStart;
+    private GridNode pathEnd;
+    private NativeList<GridNode> path;
 
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<CaveGridSystem.Singleton>();
         pathStart = 7;
         pathEnd = 7;
-        path = new NativeList<int>(32, Allocator.Persistent);
+        path = new NativeList<GridNode>(32, Allocator.Persistent);
     }
 
     public void OnDestroy(ref SystemState state)

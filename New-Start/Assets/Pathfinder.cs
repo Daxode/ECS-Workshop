@@ -2,6 +2,17 @@
 using Unity.Burst;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
+public struct GridNode : IComparable<GridNode>
+{
+    public int Index;
+    public static implicit operator int(GridNode n) => n.Index;
+    public static implicit operator GridNode(int i) => new GridNode { Index = i };
+    public int CompareTo(GridNode other)
+    {
+        return Index.CompareTo(other.Index);
+    }
+}
+
 
 [BurstCompile]
 public struct Pathfinder : IDisposable
@@ -15,8 +26,8 @@ public struct Pathfinder : IDisposable
     private NativeArray<NodeState> nodeStates;
     private NativeArray<int> pathCosts; // The total cost of the shortest path to each node from the start that we've found so far. undefined for unvisited nodes
     private NativeArray<int> pathNodeCounts; // The number of nodes in the path from start to each node (including start and this node). undefined for unvisited nodes
-    private NativeArray<int> prevNodes; // Index of the previous node in the shortest path from the start to each node. undefined for unvisited nodes
-    private NativeList<int> candidateNodes;
+    private NativeArray<GridNode> prevNodes; // Index of the previous node in the shortest path from the start to each node. undefined for unvisited nodes
+    private NativeList<GridNode> candidateNodes;
     private const int MOVE_COST_LEFTRIGHT = 2;
     private const int MOVE_COST_UP = 3;
     private const int MOVE_COST_DOWN = 1;
@@ -26,8 +37,8 @@ public struct Pathfinder : IDisposable
         nodeStates = new NativeArray<NodeState>(nodeCount, allocator, NativeArrayOptions.ClearMemory);
         pathCosts = new NativeArray<int>(nodeCount, allocator, NativeArrayOptions.UninitializedMemory);
         pathNodeCounts = new NativeArray<int>(nodeCount, allocator, NativeArrayOptions.UninitializedMemory);
-        prevNodes = new NativeArray<int>(nodeCount, allocator, NativeArrayOptions.UninitializedMemory);
-        candidateNodes = new NativeList<int>(nodeCount, allocator);
+        prevNodes = new NativeArray<GridNode>(nodeCount, allocator, NativeArrayOptions.UninitializedMemory);
+        candidateNodes = new NativeList<GridNode>(nodeCount, allocator);
     }
 
     public bool IsCreated => nodeStates.IsCreated;
@@ -50,7 +61,7 @@ public struct Pathfinder : IDisposable
         candidateNodes.Dispose();
     }
 
-    void ProcessNeighbor(int currentNode, int neighbor, int newCost)
+    void ProcessNeighbor(GridNode currentNode, GridNode neighbor, int newCost)
     {
         if (nodeStates[neighbor] == NodeState.Unvisited)
         {
@@ -81,13 +92,13 @@ public struct Pathfinder : IDisposable
     /// empty.</param>
     /// <returns>True if a path from start to end was found, or false if end is not reachable from start.</returns>
     [BurstCompile]
-    public static bool FindShortestPath(ref Pathfinder pathfinder,in NativeArray<CaveMaterialType> caveGrid, int start, int end,
-        ref NativeList<int> outPath)
+    public static bool FindShortestPath(ref Pathfinder pathfinder,in NativeArray<CaveMaterialType> caveGrid, GridNode start, GridNode end,
+        ref NativeList<GridNode> outPath)
     {
         return pathfinder.FindShortestPath(caveGrid, start, end, ref outPath);
     }
 
-    bool FindShortestPath(in NativeArray<CaveMaterialType> caveGrid, int start, int end, ref NativeList<int> outPath)
+    bool FindShortestPath(in NativeArray<CaveMaterialType> caveGrid, GridNode start, GridNode end, ref NativeList<GridNode> outPath)
     {
         outPath.Clear();
         
@@ -126,7 +137,7 @@ public struct Pathfinder : IDisposable
             if (Hint.Unlikely(nodeStates[end] == NodeState.Seen && pathCosts[end] == nextCandidatePathCost))
             {
                 outPath.ResizeUninitialized(pathNodeCounts[end]);
-                int n = end;
+                GridNode n = end;
                 for (int i = outPath.Length - 1; i >= 0; --i)
                 {
                     outPath[i] = n;
