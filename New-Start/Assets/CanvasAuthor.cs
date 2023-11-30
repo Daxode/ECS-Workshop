@@ -59,7 +59,11 @@ partial struct CanvasSetupSystem : ISystem, ISystemStartStop
                 var buildingButtonInstance =documentReference.BuildingButtonsContainer.Instantiate();
                 buildingButtonInstance.Q<VisualElement>("Icon").style.backgroundImage = new StyleBackground(buildingButton);
                 var cursorSelection = SystemAPI.QueryBuilder().WithAllRW<CursorSelection>().Build();
-                var cursorToDraw = CursorSelection.CursorToDraw.LadderOutline + i - 1; // first button is cancel, second is ladder, third is workshop, etc.
+                var cursorToDraw = CursorSelection.CursorToDraw.LadderOutline + i;
+                if (i == 4)
+                    cursorToDraw = CursorSelection.CursorToDraw.Default;
+                if (i == 5)
+                    cursorToDraw = CursorSelection.CursorToDraw.DefaultDraw;
                 buildingButtonInstance.Q<Button>().clickable.clicked += () =>
                 {
                     cursorSelection.GetSingletonRW<CursorSelection>().ValueRW.cursorToDraw = cursorToDraw;

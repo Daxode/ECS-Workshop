@@ -15,18 +15,34 @@ public class CursorAuthor : MonoBehaviour
     }
 }
 
-struct CursorSelection : IComponentData
+public struct CursorSelection : IComponentData
 {
     public CursorToDraw cursorToDraw;
+    
     public enum CursorToDraw
     {
         Default,
         OnObject,
+        DefaultDraw,
+        OnObjectDraw,
         LadderOutline,
         WorkshopOutline,
         StockpileOutline,
+        ShovelTool,
     }
 }
+public static class CursorToDrawExtensions
+{
+    public static bool IsDrawn(this CursorSelection.CursorToDraw cursorToDraw) 
+        => cursorToDraw is CursorSelection.CursorToDraw.DefaultDraw or CursorSelection.CursorToDraw.OnObjectDraw;
+    public static void SetOnObject(this ref CursorSelection.CursorToDraw cursorToDraw) 
+        => cursorToDraw = cursorToDraw.IsDrawn() ? CursorSelection.CursorToDraw.OnObjectDraw : CursorSelection.CursorToDraw.OnObject;
+    public static void SetDefault(this ref CursorSelection.CursorToDraw cursorToDraw)
+        => cursorToDraw = cursorToDraw.IsDrawn() ? CursorSelection.CursorToDraw.DefaultDraw : CursorSelection.CursorToDraw.Default;
+    public static bool IsInDefaultMode(this CursorSelection.CursorToDraw cursorToDraw)
+        => cursorToDraw is CursorSelection.CursorToDraw.Default or CursorSelection.CursorToDraw.OnObject || cursorToDraw.IsDrawn();
+}
+
 struct CursorTagHead : IComponentData {}
 
 
@@ -56,18 +72,22 @@ partial struct CursorSystem : ISystem
         });
 
         // Check if mouse is on object
-        if (cursorSelection.cursorToDraw is CursorSelection.CursorToDraw.Default or CursorSelection.CursorToDraw.OnObject)
+        if (cursorSelection.cursorToDraw.IsInDefaultMode())
         {
             if (math.distancesq(mousePos.xy, mousePosInt) < 0.1f)
             {
-                cursorSelection.cursorToDraw = CursorSelection.CursorToDraw.OnObject;
+                cursorSelection.cursorToDraw.SetOnObject();
+                
+                // Set cursor head position to grid cell
                 SystemAPI.SetComponent(SystemAPI.GetSingletonEntity<CursorTagHead>(), new LocalToWorld
                 {
                     Value = float4x4.TRS(new float3(mousePosInt, -2), quaternion.identity, 1)
                 });
             } else if (math.distancesq(mousePos.xy, mousePosInt) < 0.15f)
             {
-                cursorSelection.cursorToDraw = CursorSelection.CursorToDraw.Default;
+                cursorSelection.cursorToDraw.SetDefault();
+                
+                // Set cursor head position to grid cell
                 SystemAPI.SetComponent(SystemAPI.GetSingletonEntity<CursorTagHead>(), new LocalToWorld
                 {
                     Value = float4x4.TRS(new float3(math.lerp(mousePosInt, mousePos.xy,  math.smoothstep(0.1f, 0.15f, math.distancesq(mousePos.xy, mousePosInt))), -2), quaternion.identity, 1)
@@ -75,7 +95,9 @@ partial struct CursorSystem : ISystem
             }
             else
             {
-                cursorSelection.cursorToDraw = CursorSelection.CursorToDraw.Default;
+                cursorSelection.cursorToDraw.SetDefault();
+                
+                // Hide cursor head
                 SystemAPI.SetComponent(SystemAPI.GetSingletonEntity<CursorTagHead>(), new LocalToWorld
                 {
                     Value = float4x4.TRS(0, quaternion.identity, 0)

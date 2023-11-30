@@ -96,8 +96,11 @@ class MarchingSquareBaker : Baker<MarchingSquareAuthor>
 [UpdateBefore(typeof(CaveGridSystem))]
 partial struct DebugDrawingSystem : ISystem
 {
-    public void OnCreate(ref SystemState state) 
-        => state.RequireForUpdate<CaveGridSystem.Singleton>();
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<CursorSelection>();
+        state.RequireForUpdate<CaveGridSystem.Singleton>();
+    }
 
     public void OnUpdate(ref SystemState state)
     {
@@ -106,7 +109,7 @@ partial struct DebugDrawingSystem : ISystem
         if (camera == null) return;
         
         // draw on the cave grid
-        if (Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1))
+        if ((Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1)) && SystemAPI.GetSingleton<CursorSelection>().cursorToDraw.IsDrawn())
         {
             var mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
             var mousePosInt = (int2) (math.round(((float3)mousePos).xy+new float2(0.5f, -0.5f)));
@@ -136,6 +139,7 @@ public enum CaveMaterialType
 
 
 [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
+[UpdateAfter(typeof(TransformSystemGroup))]
 public partial struct CaveGridSystem : ISystem, ISystemStartStop
 {
     public struct Singleton : IComponentData

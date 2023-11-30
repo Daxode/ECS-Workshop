@@ -167,9 +167,12 @@ MonoBehaviour:
   spriteFrames:
   - {fileID: -1287879117, guid: b3ded538870f6af44ab9303b657de248, type: 3}
   - {fileID: -1373844887, guid: b3ded538870f6af44ab9303b657de248, type: 3}
+  - {fileID: 718008406, guid: b3ded538870f6af44ab9303b657de248, type: 3}
+  - {fileID: -1988893869, guid: b3ded538870f6af44ab9303b657de248, type: 3}
   - {fileID: -2146672603, guid: b3ded538870f6af44ab9303b657de248, type: 3}
   - {fileID: -728764335, guid: b3ded538870f6af44ab9303b657de248, type: 3}
   - {fileID: 1742668574, guid: b3ded538870f6af44ab9303b657de248, type: 3}
+  - {fileID: -1338155949, guid: b3ded538870f6af44ab9303b657de248, type: 3}
 --- !u!23 &741461207
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -432,10 +435,12 @@ MonoBehaviour:
   DocumentToDraw: {fileID: 277777254536881661, guid: 0be96f4ebbc4f5546b9cfff58e66df06,
     type: 3}
   BuildingButtons:
-  - {fileID: 884923310, guid: b3ded538870f6af44ab9303b657de248, type: 3}
   - {fileID: 1629311565, guid: b3ded538870f6af44ab9303b657de248, type: 3}
   - {fileID: 186004050, guid: b3ded538870f6af44ab9303b657de248, type: 3}
   - {fileID: 2109523082, guid: b3ded538870f6af44ab9303b657de248, type: 3}
+  - {fileID: 1022250994, guid: b3ded538870f6af44ab9303b657de248, type: 3}
+  - {fileID: 884923310, guid: b3ded538870f6af44ab9303b657de248, type: 3}
+  - {fileID: -345845719, guid: b3ded538870f6af44ab9303b657de248, type: 3}
   BuildingButtonsContainer: {fileID: 9197481963319205126, guid: 44ca5465ec9c60b499e3c4700e2a0b40,
     type: 3}
 --- !u!1 &1745923296
