@@ -145,7 +145,7 @@ public struct Pathfinder : IDisposable
                 }
                 return true;
             }
-            int currentNode = candidateNodes[nextCandidateIndex];
+            GridNode currentNode = candidateNodes[nextCandidateIndex];
             candidateNodes.RemoveAtSwapBack(nextCandidateIndex);
             // The current node's path length & previous node are now correct.
             nodeStates[currentNode] = NodeState.Visited;
@@ -156,10 +156,10 @@ public struct Pathfinder : IDisposable
             int currentLength = pathCosts[currentNode];
             var x = currentNode % CaveGridSystem.Singleton.CaveGridWidth;
             var y = currentNode / CaveGridSystem.Singleton.CaveGridWidth;
-            var neighborL = currentNode - 1;
-            var neighborR = currentNode + 1;
-            var neighborU = currentNode - CaveGridSystem.Singleton.CaveGridWidth;
-            var neighborD = currentNode + CaveGridSystem.Singleton.CaveGridWidth;
+            GridNode neighborL = currentNode - 1;
+            GridNode neighborR = currentNode + 1;
+            GridNode neighborU = currentNode - CaveGridSystem.Singleton.CaveGridWidth;
+            GridNode neighborD = currentNode + CaveGridSystem.Singleton.CaveGridWidth;
             if (x > 0 && caveGrid[neighborL] == CaveMaterialType.Air)
                 ProcessNeighbor(currentNode, neighborL, currentLength + MOVE_COST_LEFTRIGHT);
             if (x < CaveGridSystem.Singleton.CaveGridWidth-1 && caveGrid[neighborR] == CaveMaterialType.Air)
