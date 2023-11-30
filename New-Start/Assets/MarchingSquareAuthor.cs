@@ -111,10 +111,13 @@ partial struct DebugDrawingSystem : ISystem
             var mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
             var mousePosInt = (int2) (math.round(((float3)mousePos).xy+new float2(0.5f, -0.5f)));
             var i = mousePosInt.x + -mousePosInt.y * CaveGridSystem.Singleton.CaveGridWidth;
-            if (Input.GetKey(KeyCode.LeftShift))
-                caveGrid[i] = Input.GetKey(KeyCode.Mouse0) ? CaveMaterialType.Water : CaveMaterialType.Ore;
-            else
-                caveGrid[i] = Input.GetKey(KeyCode.Mouse0) ? CaveMaterialType.Air : CaveMaterialType.Rock;
+            if (i >= 0 && i < caveGrid.Length)
+            {
+                if (Input.GetKey(KeyCode.LeftShift))
+                    caveGrid[i] = Input.GetKey(KeyCode.Mouse0) ? CaveMaterialType.Water : CaveMaterialType.Ore;
+                else
+                    caveGrid[i] = Input.GetKey(KeyCode.Mouse0) ? CaveMaterialType.Air : CaveMaterialType.Rock;
+            }
         }
         
         // camera y up/down from scroll
