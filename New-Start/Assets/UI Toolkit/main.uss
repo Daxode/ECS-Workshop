@@ -22,6 +22,24 @@
 .game-indicator {
     -unity-background-scale-mode: scale-to-fit;
     position: relative;
-    width: 5%;
+    width: 64px;
     padding-bottom: 5%;
+    height: 64px;
+}
+
+.unity-toggle:hover {
+    background-image: url('project://database/Assets/Tiles/slimes-are-comming.png?fileID=1123865795&guid=b3ded538870f6af44ab9303b657de248&type=3#slimes-are-comming_113');
+}
+
+.unity-toggle__input {
+    background-color: rgba(188, 188, 188, 0);
+    background-image: url('project://database/Assets/Tiles/slimes-are-comming.png?fileID=-811079010&guid=b3ded538870f6af44ab9303b657de248&type=3#slimes-are-comming_114');
+    -unity-slice-left: 16;
+    -unity-slice-top: 16;
+    -unity-slice-right: 16;
+    -unity-slice-bottom: 16;
+}
+
+.unity-toggle:active {
+    background-image: url('project://database/Assets/Tiles/slimes-are-comming.png?fileID=1123865795&guid=b3ded538870f6af44ab9303b657de248&type=3#slimes-are-comming_113');
 }
