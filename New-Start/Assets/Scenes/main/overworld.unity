@@ -136,7 +136,7 @@ GameObject:
   - component: {fileID: 741461206}
   - component: {fileID: 741461205}
   - component: {fileID: 741461209}
-  m_Layer: 0
+  m_Layer: 4
   m_Name: Cursor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -451,7 +451,7 @@ GameObject:
   - component: {fileID: 1745923299}
   - component: {fileID: 1745923298}
   - component: {fileID: 1745923297}
-  m_Layer: 0
+  m_Layer: 4
   m_Name: CursorHead
   m_TagString: Untagged
   m_Icon: {fileID: 0}
