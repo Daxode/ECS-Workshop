@@ -107,9 +107,28 @@ partial struct DebugDrawingSystem : ISystem
         var caveGrid = SystemAPI.GetSingletonRW<CaveGridSystem.Singleton>().ValueRW.CaveGrid.AsArray();
         var camera = Camera.main;
         if (camera == null) return;
+
+        ref var cursorToDraw = ref SystemAPI.GetSingletonRW<CursorSelection>().ValueRW.cursorToDraw;
+
+        if (Input.GetKey(KeyCode.Mouse0) && cursorToDraw.IsOutline())
+        {
+            
+            // check if valid
+            float3 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
+            var corners = caveGrid.GetCornerValues((int2)(math.round(mousePos.xy)));
+            corners = 1 - (int4) math.saturate(corners);
+            var tileIndex = corners.x | (corners.y << 1) | (corners.z << 2) | (corners.w << 3);
+            if ((tileIndex == 3 && cursorToDraw is CursorSelection.CursorToDraw.StockpileOutline or CursorSelection.CursorToDraw.WorkshopOutline) || tileIndex == 0 && cursorToDraw is CursorSelection.CursorToDraw.LadderOutline)
+            {
+                // deselect the cursor
+                cursorToDraw.SetDefault();
+                
+                // TODO: place instantiation code here, marchsquaredata can hold the three outline prefab entities no array needed
+            }
+        }
         
         // draw on the cave grid
-        if ((Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1)) && SystemAPI.GetSingleton<CursorSelection>().cursorToDraw.IsDrawn())
+        if ((Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1)) && cursorToDraw.IsDrawn())
         {
             var mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
             var mousePosInt = (int2) (math.round(((float3)mousePos).xy+new float2(0.5f, -0.5f)));
@@ -215,7 +234,7 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
         // update outline tile
         foreach (var (lt, offsetXYScaleZwRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>>().WithAll<MarchingSquareTileCarverTag>())
         {
-            var corners = GetCornerValues((int2)lt.Position.xy, caveGrid);
+            var corners = caveGrid.GetCornerValues((int2)lt.Position.xy);
 
             // build a 4-bit value from the 4 corners
             corners = 1 - (int4) math.saturate(corners);
@@ -226,7 +245,7 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
         // update mat A tile (the one with the highest corner)
         foreach (var (lt, offsetXYScaleZwRef, cornerStrengthRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>, RefRW<MaterialOverrideCornerStrength>>().WithAll<MarchingSquareTileMatATag>())
         {
-            var corners = GetCornerValues((int2)lt.Position.xy, caveGrid);
+            var corners = caveGrid.GetCornerValues((int2)lt.Position.xy);
             var highestCorners = SortTheFourNumbers(corners);
             cornerStrengthRef.ValueRW.Value = (float4) (corners == highestCorners.w);
             
@@ -239,7 +258,7 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
         // update mat B tile (same as mat A, but with the second highest corner)
         foreach (var (lt, offsetXYScaleZwRef, cornerStrengthRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>, RefRW<MaterialOverrideCornerStrength>>().WithAll<MarchingSquareTileMatBTag>())
         {
-            var corners = GetCornerValues((int2)lt.Position.xy, caveGrid);
+            var corners = caveGrid.GetCornerValues((int2)lt.Position.xy);
             var highestCorners = SortTheFourNumbers(corners);
             
             // get the second highest corner
@@ -278,22 +297,25 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
             new int4(lowestMiddle1, middle2Highest), 
             lowestMiddle1.y < middle2Highest.x);
     }
-    
+
+    public void OnStopRunning(ref SystemState state) {}
+}
+
+static class CaveSystemExtensions
+{
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    int4 GetCornerValues(int2 coord, NativeArray<CaveMaterialType> caveGrid)
+    public static int4 GetCornerValues(this NativeArray<CaveMaterialType> caveGrid, int2 coord)
     {
         // assert that y is negative or ground level. As we're going from top to bottom, y should be negative
         if (coord.y > 0) throw new Exception("y must be negative");
 
         // get the 4 corners
-        var i = coord.x + -coord.y * Singleton.CaveGridWidth;
+        var i = coord.x + -coord.y * CaveGridSystem.Singleton.CaveGridWidth;
         return new int4(
-            (int)caveGrid[i + Singleton.CaveGridWidth], // Bottom Left
-            (int)caveGrid[i + Singleton.CaveGridWidth + 1], // Bottom Right
+            (int)caveGrid[i + CaveGridSystem.Singleton.CaveGridWidth], // Bottom Left
+            (int)caveGrid[i + CaveGridSystem.Singleton.CaveGridWidth + 1], // Bottom Right
             (int)caveGrid[i + 1], // Top Right
             (int)caveGrid[i] // Top Left
         );
     }
-
-    public void OnStopRunning(ref SystemState state) {}
 }

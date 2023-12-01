@@ -41,9 +41,12 @@ public static class CursorToDrawExtensions
         => cursorToDraw = cursorToDraw.IsDrawn() ? CursorSelection.CursorToDraw.DefaultDraw : CursorSelection.CursorToDraw.Default;
     public static bool IsInDefaultMode(this CursorSelection.CursorToDraw cursorToDraw)
         => cursorToDraw is CursorSelection.CursorToDraw.Default or CursorSelection.CursorToDraw.OnObject || cursorToDraw.IsDrawn();
+    public static bool IsOutline(this CursorSelection.CursorToDraw cursorToDraw)
+        => cursorToDraw is CursorSelection.CursorToDraw.LadderOutline or CursorSelection.CursorToDraw.WorkshopOutline or CursorSelection.CursorToDraw.StockpileOutline;
 }
 
-struct CursorTagHead : IComponentData {}
+struct GridSnappedTag : IComponentData {}
+struct TileSnappedTag : IComponentData {}
 
 
 partial struct CursorSystem : ISystem
@@ -51,7 +54,8 @@ partial struct CursorSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<CursorSelection>();
-        state.RequireForUpdate<CursorTagHead>();
+        state.RequireForUpdate<GridSnappedTag>();
+        state.RequireForUpdate<TileSnappedTag>();
         
         Cursor.visible = false;
     }
@@ -63,49 +67,53 @@ partial struct CursorSystem : ISystem
         
         // Get mouse position in world and round to nearest grid cell 
         var mousePos = (float3) camera.ScreenToWorldPoint(Input.mousePosition);
-        var mousePosInt = (math.round(mousePos.xy+new float2(0.5f, -0.5f))) - new float2(0.5f, -0.5f);
+        var gridSnappedPos = (math.round(mousePos.xy+new float2(0.5f, -0.5f))) - new float2(0.5f, -0.5f);
+        var tileSnappedPos = (math.round(mousePos.xy+new float2(0.0f, 0.0f))) - new float2(0.0f, 0.0f);
+        
+        // Setup cursor data
         var cursorEntity = SystemAPI.GetSingletonEntity<CursorSelection>();
+        var cursorSpriteOffsets = SystemAPI.GetBuffer<SpriteFrameElement>(cursorEntity);
         ref var cursorSelection = ref SystemAPI.GetComponentRW<CursorSelection>(cursorEntity).ValueRW;
         SystemAPI.SetComponent(cursorEntity, new LocalToWorld
         {
-            Value = float4x4.TRS(new float3(mousePos.xy, -2), quaternion.identity, 1)
+            Value = float4x4.Translate(new float3(mousePos.xy, -2))
         });
+        
+        // Hide cursor heads
+        var tileSnapEntity = SystemAPI.GetSingletonEntity<TileSnappedTag>();
+        SystemAPI.SetComponent(tileSnapEntity, default(LocalToWorld));
+        var gridSnapEntity = SystemAPI.GetSingletonEntity<GridSnappedTag>();
+        SystemAPI.SetComponent(gridSnapEntity, default(LocalToWorld));
+        
 
         // Check if mouse is on object
         if (cursorSelection.cursorToDraw.IsInDefaultMode())
         {
-            if (math.distancesq(mousePos.xy, mousePosInt) < 0.1f)
+            // Check if mouse is on object
+            if (math.distancesq(mousePos.xy, gridSnappedPos) < 0.1f)
             {
+                // Snaps cursor head to grid
+                SystemAPI.SetComponent(gridSnapEntity, new LocalToWorld
+                {
+                    Value = float4x4.Translate(new float3(gridSnappedPos, -2))
+                });
                 cursorSelection.cursorToDraw.SetOnObject();
-                
-                // Set cursor head position to grid cell
-                SystemAPI.SetComponent(SystemAPI.GetSingletonEntity<CursorTagHead>(), new LocalToWorld
-                {
-                    Value = float4x4.TRS(new float3(mousePosInt, -2), quaternion.identity, 1)
-                });
-            } else if (math.distancesq(mousePos.xy, mousePosInt) < 0.15f)
-            {
-                cursorSelection.cursorToDraw.SetDefault();
-                
-                // Set cursor head position to grid cell
-                SystemAPI.SetComponent(SystemAPI.GetSingletonEntity<CursorTagHead>(), new LocalToWorld
-                {
-                    Value = float4x4.TRS(new float3(math.lerp(mousePosInt, mousePos.xy,  math.smoothstep(0.1f, 0.15f, math.distancesq(mousePos.xy, mousePosInt))), -2), quaternion.identity, 1)
-                });
             }
             else
-            {
                 cursorSelection.cursorToDraw.SetDefault();
-                
-                // Hide cursor head
-                SystemAPI.SetComponent(SystemAPI.GetSingletonEntity<CursorTagHead>(), new LocalToWorld
-                {
-                    Value = float4x4.TRS(0, quaternion.identity, 0)
-                });
-            }
         }
         
-        var buffer = SystemAPI.GetBuffer<SpriteFrameElement>(cursorEntity);
-        SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(cursorEntity).ValueRW.Value.xy = buffer[(int)cursorSelection.cursorToDraw].offset;
+        if (cursorSelection.cursorToDraw.IsOutline())
+        {
+            // Snaps cursor head to grid
+            SystemAPI.SetComponent(tileSnapEntity, new LocalToWorld
+            {
+                Value = float4x4.Translate(new float3(tileSnappedPos, -2))
+            });
+            SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(cursorEntity).ValueRW.Value.xy = SystemAPI.GetBuffer<SpriteFrameElement>(tileSnapEntity)[0].offset;
+            cursorEntity = tileSnapEntity;
+        }
+        
+        SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(cursorEntity).ValueRW.Value.xy = cursorSpriteOffsets[(int)cursorSelection.cursorToDraw].offset;
     }
 }
