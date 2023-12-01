@@ -96,23 +96,13 @@ class MarchingSquareBaker : Baker<MarchingSquareAuthor>
 [UpdateBefore(typeof(CaveGridSystem))]
 partial struct DebugDrawingSystem : ISystem
 {
-    private Pathfinder pathfinder;
-    private GridNode pathStart;
-    private GridNode pathEnd;
-    private NativeList<GridNode> path;
-
+    private EntityQuery _idleSlimeQuery;
     public void OnCreate(ref SystemState state)
     {
+        _idleSlimeQuery = new EntityQueryBuilder(Allocator.Temp)
+            .WithDisabled<PathGoal>()
+            .Build(ref state);
         state.RequireForUpdate<CaveGridSystem.Singleton>();
-        pathStart = 7;
-        pathEnd = 7;
-        path = new NativeList<GridNode>(32, Allocator.Persistent);
-    }
-
-    public void OnDestroy(ref SystemState state)
-    {
-        pathfinder.Dispose();
-        path.Dispose();
     }
 
     public void OnUpdate(ref SystemState state)
@@ -120,9 +110,6 @@ partial struct DebugDrawingSystem : ISystem
         var caveGrid = SystemAPI.GetSingletonRW<CaveGridSystem.Singleton>().ValueRW.CaveGrid.AsArray();
         var camera = Camera.main;
         if (camera == null) return;
-
-        if (!pathfinder.IsCreated)
-            pathfinder = new Pathfinder(caveGrid.Length, Allocator.Persistent);
 
         // draw on the cave grid
         if (Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1))
@@ -132,33 +119,19 @@ partial struct DebugDrawingSystem : ISystem
             var i = mousePosInt.x + -mousePosInt.y * CaveGridSystem.Singleton.CaveGridWidth;
             if (Input.GetKey(KeyCode.LeftShift))
                 caveGrid[i] = Input.GetKey(KeyCode.Mouse0) ? CaveMaterialType.Water : CaveMaterialType.Ore;
+            else if (Input.GetKey(KeyCode.LeftAlt) && !_idleSlimeQuery.IsEmpty) // debug pathfinding
+            {
+                var slimes = _idleSlimeQuery.ToEntityArray(Allocator.Temp);
+                state.EntityManager.SetComponentEnabled<PathGoal>(slimes[0], true);
+                state.EntityManager.SetComponentData(slimes[0], new PathGoal { Node = i });
+            }
             else
                 caveGrid[i] = Input.GetKey(KeyCode.Mouse0) ? CaveMaterialType.Air : CaveMaterialType.Rock;
-
-            if (Input.GetKey(KeyCode.Mouse0) && !Input.GetKey(KeyCode.LeftShift))
-            {
-                pathEnd = i;
-                bool foundPath = Pathfinder.FindShortestPath(ref pathfinder, caveGrid, pathStart, pathEnd, ref path);
-            }
         }
         
         // camera y up/down from scroll
         if (Input.mouseScrollDelta != Vector2.zero) 
             camera.transform.position += new Vector3(0, Input.mouseScrollDelta.y, 0);
-        
-        // draw path, if it exists
-        for(int i=1; i<path.Length; ++i)
-        {
-            var x0 = path[i-1] % CaveGridSystem.Singleton.CaveGridWidth;
-            var y0 = path[i-1] / CaveGridSystem.Singleton.CaveGridWidth;
-            var x1 = path[i] % CaveGridSystem.Singleton.CaveGridWidth;
-            var y1 = path[i] / CaveGridSystem.Singleton.CaveGridWidth;
-            Debug.DrawLine(
-                new float3(x0-0.5f, -y0+0.5f, 0),
-                new float3(x1-0.5f, -y1+0.5f, 0),
-                Color.green);
-        }
-        
     }
 }
 

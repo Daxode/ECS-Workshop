@@ -2,6 +2,10 @@
 using Unity.Burst;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+
 /// <summary>
 /// Wrapper to distinguish an integer node index in the grid from a raw integer.
 /// </summary>
@@ -114,18 +118,21 @@ public struct Pathfinder : IDisposable
     /// <param name="caveGrid">The current grid state.</param>
     /// <param name="start">index of the starting point on the grid.</param>
     /// <param name="end">index of the destination on the grid.</param>
-    /// <param name="outPath">Contains the sequence of nodes to visit to reach <paramref name="end"/> from
-    /// <paramref name="start"/>, including these two nodes themselves. If no path is found, this list will be
-    /// empty.</param>
-    /// <returns>True if a path from start to end was found, or false if end is not reachable from start.</returns>
+    /// <param name="outPath">
+    /// Contains the sequence of nodes to visit to reach <paramref name="end"/> from <paramref name="start"/>.
+    /// The sequence will be in reverse order, as this simplifies both the code to generate the list and the code
+    /// to consume it.
+    /// If no path is found (or if the start and end nodes are equal), this list will be empty. Otherwise, the first
+    /// element will always be <paramref name="end"/>. The <paramref name="start"/> node will not be included in the
+    /// list.</param>
     [BurstCompile]
-    public static bool FindShortestPath(ref Pathfinder pathfinder,in NativeArray<CaveMaterialType> caveGrid, GridNode start, GridNode end,
-        ref NativeList<GridNode> outPath)
+    public static void FindShortestPath(ref Pathfinder pathfinder,in NativeArray<CaveMaterialType> caveGrid, GridNode start, GridNode end,
+        ref DynamicBuffer<PathNode> outPath)
     {
-        return pathfinder.FindShortestPath(caveGrid, start, end, ref outPath);
+        pathfinder.FindShortestPath(caveGrid, start, end, ref outPath);
     }
 
-    bool FindShortestPath(in NativeArray<CaveMaterialType> caveGrid, GridNode start, GridNode end, ref NativeList<GridNode> outPath)
+    void FindShortestPath(in NativeArray<CaveMaterialType> caveGrid, GridNode start, GridNode end, ref DynamicBuffer<PathNode> outPath)
     {
         outPath.Clear();
         
@@ -133,17 +140,16 @@ public struct Pathfinder : IDisposable
         if (caveGrid[start] != CaveMaterialType.Air ||
             caveGrid[end] != CaveMaterialType.Air)
         {
-            return false;
+            return; // no path from start to end
         }
         if (start == end)
         {
-            outPath.Add(start);
-            return true;
+            return; // start and end are identical
         }
 
         Reset();
         pathCosts[start] = 0;
-        pathNodeCounts[start] = 1;
+        pathNodeCounts[start] = 0;
         prevNodes[start] = -1;
         candidateNodes.AddNoResize(start);
         while (!candidateNodes.IsEmpty)
@@ -163,14 +169,14 @@ public struct Pathfinder : IDisposable
             // actually need to wait until we visit that node.
             if (Hint.Unlikely(nodeStates[end] == NodeState.Seen && pathCosts[end] == nextCandidatePathCost))
             {
-                outPath.ResizeUninitialized(pathNodeCounts[end]);
+                outPath.Capacity = pathNodeCounts[end];
                 GridNode n = end;
-                for (int i = outPath.Length - 1; i >= 0; --i)
+                do
                 {
-                    outPath[i] = n;
+                    outPath.Add(n);
                     n = prevNodes[n];
-                }
-                return true;
+                } while (n != start);
+                return;
             }
             GridNode currentNode = candidateNodes[nextCandidateIndex];
             candidateNodes.RemoveAtSwapBack(nextCandidateIndex);
@@ -198,7 +204,150 @@ public struct Pathfinder : IDisposable
         }
         // If the candidates array empties without visiting the end node, it means the end node isn't reachable
         // from the start node.
-        return false;
+        return;
     }
 }
 
+[BurstCompile]
+public partial struct SlimeMoveSystem : ISystem
+{
+    private Pathfinder _pathfinder;
+    private EntityQuery _needsPathQuery;
+    private EntityQuery _hasPathQuery;
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<CaveGridSystem.Singleton>();
+        _needsPathQuery = new EntityQueryBuilder(Allocator.Temp)
+            .WithAll<LocalTransform, PathGoal>()
+            .WithDisabledRW<PathNode,PathMoveState>()
+            .Build(ref state);
+        _hasPathQuery = new EntityQueryBuilder(Allocator.Temp)
+            .WithAllRW<PathNode,PathMoveState>()
+            .WithAllRW<LocalTransform>()
+            .Build(ref state);
+    }
+
+    public void OnDestroy(ref SystemState state)
+    {
+        _pathfinder.Dispose();
+    }
+
+    [BurstCompile]
+    partial struct FindPathsJob : IJobEntity
+    {
+        public Pathfinder Finder;
+        [ReadOnly] public NativeArray<CaveMaterialType> CaveGrid; 
+        public int CaveGridWidth;
+        [NativeDisableParallelForRestriction] public BufferLookup<PathNode> PathNodeLookup;
+        [NativeDisableParallelForRestriction] public ComponentLookup<PathMoveState> PathMoveStateLookup;
+        void Execute(Entity entity, in PathGoal goal, in LocalTransform transform)
+        {
+            var pathNodes = PathNodeLookup[entity];
+            GridNode startNode = (int)transform.Position.x - (int)transform.Position.y * CaveGridWidth;
+            Pathfinder.FindShortestPath(ref Finder, CaveGrid, startNode, goal.Node, ref pathNodes);
+            if (pathNodes.IsEmpty)
+            {
+                // TODO: need to handle the !found case here. If we just do nothing, we'll immediately search again
+                // the next time this job runs, and probably waste a ton of time on failed searches. Maybe some sort of
+                // cooldown? Maybe just quietly remove the goal?
+            }
+            else
+            {
+                PathNodeLookup.SetBufferEnabled(entity, true);
+                // Enable and initialize the move state.
+                PathMoveStateLookup.SetComponentEnabled(entity, true);
+                PathMoveStateLookup[entity] = new PathMoveState
+                {
+                    From = startNode,
+                    To = pathNodes[^1],
+                    T = 0,
+                };
+                pathNodes.RemoveAtSwapBack(pathNodes.Length - 1);
+            }
+        }
+    }
+
+    [BurstCompile]
+    partial struct PathMoveJob : IJobEntity
+    {
+        [NativeDisableParallelForRestriction] public BufferLookup<PathNode> PathNodeLookup;
+        [NativeDisableParallelForRestriction] public ComponentLookup<PathMoveState> PathMoveStateLookup;
+        [NativeDisableParallelForRestriction] public ComponentLookup<PathGoal> PathGoalLookup;
+        public int CaveGridWidth;
+        public float DeltaTime;
+        void Execute(Entity entity, ref LocalTransform transform)
+        {
+            var moveState = PathMoveStateLookup.GetRefRW(entity);
+            // Advance the current move.
+            // The current assumption is that a path is always valid once it's been computed; otherwise we would
+            // have to handle the case here where the destination node is no longer accessible.
+            GridNode fromNode = moveState.ValueRO.From;
+            GridNode toNode = moveState.ValueRO.To;
+            var toNodePos = new float3(toNode % CaveGridWidth, -toNode / CaveGridWidth, 0);
+            moveState.ValueRW.T += DeltaTime;
+            if (Hint.Likely(moveState.ValueRO.T < 1.0f))
+            {
+                // still moving to the current destination node
+                var fromNodePos = new float3(fromNode % CaveGridWidth, -fromNode / CaveGridWidth, 0);
+                // TODO: something fancier than a simple lerp here
+                transform.Position = math.lerp(fromNodePos, toNodePos, moveState.ValueRO.T);
+            }
+            else
+            {
+                // Clamp position to destination node
+                transform.Position = toNodePos;
+                // Try to grab the next node from the path.
+                var pathNodes = PathNodeLookup[entity];
+                if (Hint.Unlikely(pathNodes.IsEmpty))
+                {
+                    // we've reached the end of the path.
+                    PathNodeLookup.SetBufferEnabled(entity, false);
+                    PathMoveStateLookup.SetComponentEnabled(entity, false);
+                    PathGoalLookup.SetComponentEnabled(entity, false);
+                }
+                else
+                {
+                    var nextToNode = pathNodes[^1];
+                    pathNodes.RemoveAtSwapBack(pathNodes.Length - 1);
+                    moveState.ValueRW = new PathMoveState {
+                        From = toNode,
+                        To = nextToNode,
+                        T = moveState.ValueRO.T % 1.0f, // forward any leftover T into the new move
+                    };
+                }
+            }
+        }
+    }
+
+    public void OnUpdate(ref SystemState state)
+    {
+        var caveGrid = SystemAPI.GetSingletonRW<CaveGridSystem.Singleton>().ValueRW.CaveGrid.AsArray();
+        if (Hint.Unlikely(!_pathfinder.IsCreated))
+            _pathfinder = new Pathfinder(caveGrid.Length, Allocator.Persistent);
+        // For each slime with a goal but no path, compute a path.
+        // TODO: can't use IFE here because SystemAPI.Query.WithDisabled<T>() doesn't work if T is an IBufferElementData.
+        // TODO: convert to a parallel job, but this requires having a separate pathfinder per thread.
+        state.CompleteDependency();
+        var pathJob = new FindPathsJob
+        {
+            Finder = _pathfinder,
+            CaveGrid = caveGrid,
+            CaveGridWidth = CaveGridSystem.Singleton.CaveGridWidth,
+            PathNodeLookup = SystemAPI.GetBufferLookup<PathNode>(false),
+            PathMoveStateLookup = SystemAPI.GetComponentLookup<PathMoveState>(false),
+        };
+        pathJob.RunByRef(_needsPathQuery);
+
+        // Move slimes that have a path
+        var moveJob = new PathMoveJob
+        {
+            PathNodeLookup = SystemAPI.GetBufferLookup<PathNode>(false),
+            PathMoveStateLookup = SystemAPI.GetComponentLookup<PathMoveState>(false),
+            PathGoalLookup = SystemAPI.GetComponentLookup<PathGoal>(false),
+            CaveGridWidth = CaveGridSystem.Singleton.CaveGridWidth,
+            DeltaTime = SystemAPI.Time.DeltaTime,
+        };
+        moveJob.Run(_hasPathQuery);
+        state.Dependency = default;
+    }
+}
