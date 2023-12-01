@@ -2,6 +2,9 @@
 using Unity.Burst;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
+/// <summary>
+/// Wrapper to distinguish an integer node index in the grid from a raw integer.
+/// </summary>
 public struct GridNode : IComparable<GridNode>
 {
     public int Index;
@@ -13,6 +16,30 @@ public struct GridNode : IComparable<GridNode>
     }
 }
 
+/// <summary>
+/// 
+/// </summary>
+public struct PathGoal : IComponentData, IEnableableComponent
+{
+    public GridNode Node;
+}
+
+public struct PathMoveState : IComponentData, IEnableableComponent
+{
+    public GridNode From, To;
+    public float T; // 0..1
+}
+
+/// <summary>
+/// The nodes comprising a path to the target node stored in the <see cref="PathGoal"/> component. 
+/// </summary>
+[InternalBufferCapacity(0)]
+public struct PathNode : IBufferElementData, IEnableableComponent
+{
+    public GridNode Node;
+    public static implicit operator PathNode(GridNode n) => new PathNode { Node = n };
+    public static implicit operator GridNode(PathNode n) => n.Node;
+}
 
 [BurstCompile]
 public struct Pathfinder : IDisposable
