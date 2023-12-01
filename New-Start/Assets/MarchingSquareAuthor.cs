@@ -56,7 +56,7 @@ class MarchingSquareBaker : Baker<MarchingSquareAuthor>
 {
     public override void Bake(MarchingSquareAuthor authoring)
     {
-        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        var entity = GetEntity(TransformUsageFlags.None);
         AddComponent(entity, new MarchSquareData
         {
             spriteTargetPrefab = GetEntity(authoring.spriteTargetPrefab, TransformUsageFlags.Renderable),
@@ -100,39 +100,51 @@ partial struct DebugDrawingSystem : ISystem
     {
         state.RequireForUpdate<CursorSelection>();
         state.RequireForUpdate<CaveGridSystem.Singleton>();
+        state.RequireForUpdate<ConstructionSiteElement>();
     }
-
+    
     public void OnUpdate(ref SystemState state)
     {
-        var caveGrid = SystemAPI.GetSingletonRW<CaveGridSystem.Singleton>().ValueRW.CaveGrid.AsArray();
         var camera = Camera.main;
         if (camera == null) return;
+        var caveSystem = SystemAPI.GetSingletonRW<CaveGridSystem.Singleton>().ValueRW;
+        var caveGrid = caveSystem.CaveGrid.AsArray();
+        var caveTiles = caveSystem.CaveTiles.AsArray();
+
+        var constructionSites = SystemAPI.GetSingletonBuffer<ConstructionSiteElement>();
 
         ref var cursorToDraw = ref SystemAPI.GetSingletonRW<CursorSelection>().ValueRW.cursorToDraw;
 
         if (Input.GetKey(KeyCode.Mouse0) && cursorToDraw.IsOutline())
         {
-            
-            // check if valid
+            // Get the tile index
             float3 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
-            var corners = caveGrid.GetCornerValues((int2)(math.round(mousePos.xy)));
-            corners = 1 - (int4) math.saturate(corners);
-            var tileIndex = corners.x | (corners.y << 1) | (corners.z << 2) | (corners.w << 3);
-            if ((tileIndex == 3 && cursorToDraw is CursorSelection.CursorToDraw.StockpileOutline or CursorSelection.CursorToDraw.WorkshopOutline) || tileIndex == 0 && cursorToDraw is CursorSelection.CursorToDraw.LadderOutline)
-            {
-                // deselect the cursor
-                cursorToDraw.SetDefault();
-                
-                // TODO: place instantiation code here, marchsquaredata can hold the three outline prefab entities no array needed
+            var tileIndex = CaveGridSystem.Singleton.WorldPosToTileIndex(mousePos.xy);
+
+            if (tileIndex >= 0 && tileIndex < caveTiles.Length && caveTiles[tileIndex] == Entity.Null) {
+                // check if valid
+                var corners = caveGrid.GetCornerValues((int2)(math.round(mousePos.xy)));
+                corners = 1 - (int4)math.saturate(corners);
+                var marchSetIndex = corners.x | (corners.y << 1) | (corners.z << 2) | (corners.w << 3);
+                if ((marchSetIndex == 3 && cursorToDraw is CursorSelection.CursorToDraw.StockpileOutline or CursorSelection.CursorToDraw.WorkshopOutline) 
+                    || marchSetIndex == 0 && cursorToDraw is CursorSelection.CursorToDraw.LadderOutline)
+                {
+                    var constructionIndex = (cursorToDraw - CursorSelection.CursorToDraw.LadderOutline);
+                    var constructionSiteEntity = state.EntityManager.Instantiate(constructionSites[constructionIndex].constructionSite);
+                    SystemAPI.SetComponent(constructionSiteEntity, LocalTransform.FromPosition(new float3(math.round(mousePos.xy), -2)));
+                    caveTiles[tileIndex] = constructionSiteEntity;
+
+                    // deselect the cursor
+                    cursorToDraw.SetDefault();
+                }
             }
         }
         
         // draw on the cave grid
         if ((Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1)) && cursorToDraw.IsDrawn())
         {
-            var mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
-            var mousePosInt = (int2) (math.round(((float3)mousePos).xy+new float2(0.5f, -0.5f)));
-            var i = mousePosInt.x + -mousePosInt.y * CaveGridSystem.Singleton.CaveGridWidth;
+            float3 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
+            var i = CaveGridSystem.Singleton.WorldPosToGridIndex(mousePos.xy);
             if (i >= 0 && i < caveGrid.Length)
             {
                 if (Input.GetKey(KeyCode.LeftShift))
@@ -148,7 +160,7 @@ partial struct DebugDrawingSystem : ISystem
     }
 }
 
-public enum CaveMaterialType
+public enum CaveMaterialType : byte
 {
     Rock,
     Air,
@@ -166,6 +178,25 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
         public NativeList<CaveMaterialType> CaveGrid;
         public const int CaveGridWidth = 20;
         public int GetCaveGridHeight() => CaveGrid.Length / CaveGridWidth;
+        
+        public NativeList<Entity> CaveTiles;
+        public const int CaveTilesWidth = CaveGridWidth-1;
+        public int GetCaveTileHeight() => CaveTiles.Length / CaveTilesWidth;
+        
+        public static int WorldPosToTileIndex(float2 worldPos)
+        {
+            var tilePos = (int2)math.round(worldPos);
+            return tilePos.x + -tilePos.y * CaveGridSystem.Singleton.CaveTilesWidth;
+        }
+    
+        public static int2 WorldPosToGridPos(float2 worldPos) => 
+            (int2) math.round(worldPos+new float2(0.5f, -0.5f));
+
+        public static int WorldPosToGridIndex(float2 worldPos)
+        {
+            var gridPos = WorldPosToGridPos(worldPos);
+            return gridPos.x + -gridPos.y * CaveGridSystem.Singleton.CaveGridWidth;
+        }
     }
 
     // Generate the cave grid
@@ -173,8 +204,10 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
     public void OnCreate(ref SystemState state)
     {
         var caveGrid = new NativeList<CaveMaterialType>(Singleton.CaveGridWidth * 128, Allocator.Persistent);
-        state.EntityManager.AddComponentData(state.SystemHandle, new Singleton { CaveGrid = caveGrid, });
+        var caveTiles = new NativeList<Entity>(Singleton.CaveTilesWidth * 127, Allocator.Persistent);
+        state.EntityManager.AddComponentData(state.SystemHandle, new Singleton { CaveGrid = caveGrid, CaveTiles = caveTiles});
         caveGrid.Length = caveGrid.Capacity;
+        caveTiles.Resize(caveTiles.Capacity, NativeArrayOptions.ClearMemory);
         for (var i = 0; i < caveGrid.Length; i++)
         {
             var x = i % Singleton.CaveGridWidth;
