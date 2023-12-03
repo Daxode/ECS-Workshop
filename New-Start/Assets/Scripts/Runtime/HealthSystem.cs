@@ -1,9 +1,7 @@
 ﻿using System;
 using Unity.Burst;
 using Unity.Entities;
-using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 struct HealthData : IComponentData
 {
@@ -60,12 +58,14 @@ partial struct HealthSystem : ISystem
             .GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
             .CreateCommandBuffer(state.WorldUnmanaged);
 
-        foreach (var (dataRef, e) in SystemAPI.Query<RefRW<HealthData>>().WithEntityAccess())
+        foreach (var (dataRef, offsetXYScaleZw, frames, e) in SystemAPI.Query<RefRW<HealthData>, RefRW<MaterialOverrideOffsetXYScaleZW>, DynamicBuffer<SpriteFrameElement>>().WithEntityAccess())
         {
             // update invincibility timer
             if (dataRef.ValueRW.hitInvincibilityTimer > 0)
                 dataRef.ValueRW.hitInvincibilityTimer -= SystemAPI.Time.DeltaTime;
 
+            offsetXYScaleZw.ValueRW.Value.xy = frames[(int)((frames.Length-1) * (dataRef.ValueRO.health / (float)dataRef.ValueRO.maxHealth))].offset;
+            
             // if dead, destroy and skip
             if (dataRef.ValueRO.health <= 0)
             {

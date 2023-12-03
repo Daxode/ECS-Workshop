@@ -272,7 +272,8 @@ partial struct DebugDrawingSystem : ISystem
 
         var constructionSites = SystemAPI.GetSingletonBuffer<ConstructionSiteElement>();
 
-        ref var cursorToDraw = ref SystemAPI.GetSingletonRW<CursorSelection>().ValueRW.cursorToDraw;
+        ref var cursorSelection = ref SystemAPI.GetSingletonRW<CursorSelection>().ValueRW;
+        ref var cursorToDraw = ref cursorSelection.cursorToDraw;
 
         if (Input.GetKeyDown(KeyCode.Mouse1) && cursorToDraw.IsOutline())
             cursorToDraw.SetDefault();
@@ -332,6 +333,13 @@ partial struct DebugDrawingSystem : ISystem
             }
 
         }
+
+        if (Input.GetKeyDown(KeyCode.Mouse0) && cursorToDraw.IsSelected())
+        {
+            if (cursorSelection.hoveredEntity != Entity.Null)
+                SystemAPI.SetComponentEnabled<Selectable>(cursorSelection.hoveredEntity, true);
+        }
+        
         
         // draw on the cave grid
         if ((Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1)) && cursorToDraw.IsDrawn())
@@ -350,20 +358,6 @@ partial struct DebugDrawingSystem : ISystem
         // camera y up/down from scroll
         if (Input.mouseScrollDelta != Vector2.zero) 
             camera.transform.position += new Vector3(0, Input.mouseScrollDelta.y, 0);
-        
-        // draw path, if it exists
-        for(int i=1; i<path.Length; ++i)
-        {
-            var x0 = path[i-1] % CaveGridSystem.Singleton.CaveGridWidth;
-            var y0 = path[i-1] / CaveGridSystem.Singleton.CaveGridWidth;
-            var x1 = path[i] % CaveGridSystem.Singleton.CaveGridWidth;
-            var y1 = path[i] / CaveGridSystem.Singleton.CaveGridWidth;
-            Debug.DrawLine(
-                new float3(x0-0.5f, -y0+0.5f, 0),
-                new float3(x1-0.5f, -y1+0.5f, 0),
-                Color.green);
-        }
-        
     }
 }
 
@@ -497,10 +491,9 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
         {
             var corners = caveGrid.GetCornerValues((int2)lt.Position.xy);
             var highestCorners = SortTheFourNumbers(corners);
-            cornerStrengthRef.ValueRW.Value = (float4) (corners == highestCorners.w);
             
             // build a 4-bit value from the 4 corners
-            corners = 1 - (int4) math.saturate(corners);
+            corners = 1-(int4) (corners == highestCorners.w);
             var valCombined = corners.x | (corners.y << 1) | (corners.z << 2) | (corners.w << 3);
             offsetXYScaleZwRef.ValueRW.Value.xy = marchSquareSets[math.clamp(highestCorners.w-1, 0, marchSquareSets.Length-1)].GetOffset(valCombined);
         }
@@ -521,13 +514,11 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
                 validSecond = highestCorners.x;
             
             // if there is no second highest corner, then there is no corner
-            if (validSecond == 0)
-                cornerStrengthRef.ValueRW.Value = 0;
-            else
-                cornerStrengthRef.ValueRW.Value = (float4) (corners == validSecond);
+            cornerStrengthRef.ValueRW.Value = validSecond == 0 ? 0 : 1;
+            
             
             // build a 4-bit value from the 4 corners
-            corners = 1 - (int4) math.saturate(corners);
+            corners = 1-(int4) (corners == validSecond);
             var valCombined = corners.x | (corners.y << 1) | (corners.z << 2) | (corners.w << 3);
             offsetXYScaleZwRef.ValueRW.Value.xy = marchSquareSets[math.clamp(validSecond-1, 0, marchSquareSets.Length-1)].GetOffset(valCombined);
         }

@@ -10,7 +10,7 @@ public class CursorAuthor : MonoBehaviour
         public override void Bake(CursorAuthor authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Renderable);
-            AddComponent(entity, new CursorSelection());
+            AddComponent(entity, new CursorSelection{cursorToDraw = CursorSelection.CursorToDraw.SelectDefault});
         }
     }
 }
@@ -18,6 +18,7 @@ public class CursorAuthor : MonoBehaviour
 public struct CursorSelection : IComponentData
 {
     public CursorToDraw cursorToDraw;
+    public Entity hoveredEntity;
     
     public enum CursorToDraw
     {
@@ -32,6 +33,7 @@ public struct CursorSelection : IComponentData
         StockpileOutline,
     }
 }
+
 public static class CursorToDrawExtensions
 {
     public static bool IsSelected(this CursorSelection.CursorToDraw cursorToDraw) 
@@ -93,8 +95,8 @@ partial struct CursorSystem : ISystem
         });
         
         // Hide cursor heads
-        var gridSnapEntity = SystemAPI.GetSingletonEntity<GridSnappedTag>();
-        SystemAPI.SetComponent(gridSnapEntity, default(LocalToWorld));
+        var headEntity = SystemAPI.GetSingletonEntity<GridSnappedTag>();
+        SystemAPI.SetComponent(headEntity, default(LocalToWorld));
         
 
         // Check if mouse is on object
@@ -104,14 +106,14 @@ partial struct CursorSystem : ISystem
             if (math.distancesq(mousePos.xy, gridSnappedPos) < 0.1f)
             {
                 // Snaps cursor head to grid
-                SystemAPI.SetComponent(gridSnapEntity, new LocalToWorld
+                SystemAPI.SetComponent(headEntity, new LocalToWorld
                 {
                     Value = float4x4.Translate(new float3(gridSnappedPos, -2f))
                 });
                 cursorSelection.cursorToDraw.SetOnObject();
                 var gridSpriteIndex = cursorSelection.cursorToDraw.IsDestroy() ? 1 : 0;
-                var gridSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(gridSnapEntity)[gridSpriteIndex].offset;
-                SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(gridSnapEntity).ValueRW.Value.xy = gridSpriteOffset;
+                var gridSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(headEntity)[gridSpriteIndex].offset;
+                SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(headEntity).ValueRW.Value.xy = gridSpriteOffset;
             }
             else
                 cursorSelection.cursorToDraw.SetDefault();
@@ -122,18 +124,27 @@ partial struct CursorSystem : ISystem
         {
             var (snappedPos, _) = CaveGridSystem.Singleton.SnapToTileOrGrid(mousePos.xy);
             
+            cursorSelection.hoveredEntity = Entity.Null;
+            foreach (var (ltw, e) in SystemAPI.Query<LocalToWorld>().WithAll<Selectable>().WithEntityAccess().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+            {
+                var slimePos = ltw.Value.c3.xy;
+                var slimeIsCloser = math.distancesq(mousePos.xy, slimePos) < math.distancesq(mousePos.xy, snappedPos);
+                snappedPos =  slimeIsCloser ? slimePos : snappedPos;
+                cursorSelection.hoveredEntity = slimeIsCloser ? e : cursorSelection.hoveredEntity;
+            }
+            
             // Check if mouse is on object
             if (math.distancesq(mousePos.xy, snappedPos) < 0.1f)
             {
                 // Snaps cursor head to grid
-                SystemAPI.SetComponent(gridSnapEntity, new LocalToWorld
+                SystemAPI.SetComponent(headEntity, new LocalToWorld
                 {
                     Value = float4x4.Translate(new float3(snappedPos, -2f))
                 });
                 cursorSelection.cursorToDraw.SetOnObject();
                 var gridSpriteIndex = cursorSelection.cursorToDraw.IsDestroy() ? 1 : 0;
-                var gridSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(gridSnapEntity)[gridSpriteIndex].offset;
-                SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(gridSnapEntity).ValueRW.Value.xy = gridSpriteOffset;
+                var gridSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(headEntity)[gridSpriteIndex].offset;
+                SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(headEntity).ValueRW.Value.xy = gridSpriteOffset;
             }
             else
                 cursorSelection.cursorToDraw.SetDefault();
@@ -142,15 +153,20 @@ partial struct CursorSystem : ISystem
         if (cursorSelection.cursorToDraw.IsOutline())
         {
             // Snaps cursor head to grid
-            SystemAPI.SetComponent(gridSnapEntity, new LocalToWorld
+            SystemAPI.SetComponent(headEntity, new LocalToWorld
             {
                 Value = float4x4.Translate(new float3(tileSnappedPos, -2f))
             });
-            var tileSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(gridSnapEntity)[0].offset;
+            var tileSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(headEntity)[0].offset;
             SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(cursorEntity).ValueRW.Value.xy = tileSpriteOffset;
-            cursorEntity = gridSnapEntity;
+            cursorEntity = headEntity;
         }
         
         SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(cursorEntity).ValueRW.Value.xy = cursorSpriteOffsets[(int)cursorSelection.cursorToDraw].offset;
     }
+}
+
+struct Selectable : IComponentData, IEnableableComponent
+{
+    public Entity outlineEntity;
 }
