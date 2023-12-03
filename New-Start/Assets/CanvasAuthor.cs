@@ -16,7 +16,7 @@ public class CanvasAuthor : MonoBehaviour
             var entity = GetEntity(TransformUsageFlags.None);
             AddComponentObject(entity, new CanvasDocumentReference
             {
-                Document = DependsOn(authoring.DocumentToDraw),
+                DocumentGO = DependsOn(authoring.DocumentToDraw.gameObject),
                 BuildingButtons = authoring.BuildingButtons,
                 BuildingButtonsContainer = authoring.BuildingButtonsContainer
             });
@@ -26,7 +26,7 @@ public class CanvasAuthor : MonoBehaviour
 
 class CanvasDocumentReference : IComponentData
 {
-    public UIDocument Document;
+    public GameObject DocumentGO;
     public Sprite[] BuildingButtons;
     public VisualTreeAsset BuildingButtonsContainer;
 }
@@ -49,7 +49,7 @@ partial struct CanvasSetupSystem : ISystem, ISystemStartStop
         var cleanupObjects = SystemAPI.ManagedAPI.GetComponent<Singleton>(state.SystemHandle).cleanupObjects;
         foreach (var documentReference in SystemAPI.Query<CanvasDocumentReference>())
         {
-            var document = Object.Instantiate(documentReference.Document);
+            var document = Object.Instantiate(documentReference.DocumentGO).GetComponent<UIDocument>();
             cleanupObjects.Add(document.gameObject);
             var buildingButtons = document.rootVisualElement.Q<VisualElement>("BuildingButtons");
 

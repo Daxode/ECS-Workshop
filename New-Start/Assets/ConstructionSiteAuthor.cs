@@ -5,9 +5,8 @@ using UnityEngine;
 public class ConstructionSiteAuthor : MonoBehaviour
 {
     [SerializeField] GameObject builtPrefab;
-    public int neededResources = 100;
-    public int currentResources;
-    public TextMesh resourceText;
+    [SerializeField] int neededResources = 100;
+    [SerializeField] TextMesh textMesh;
 
     class Baker : Baker<ConstructionSiteAuthor>
     {
@@ -18,12 +17,8 @@ public class ConstructionSiteAuthor : MonoBehaviour
             {
                 builtPrefab = GetEntity(authoring.builtPrefab, TransformUsageFlags.None),
                 neededResources = authoring.neededResources,
-                currentResources = authoring.currentResources
-            });
-            
-            AddComponentObject(entity, new ConstructionText()
-            {
-                resourceText = authoring.resourceText
+                currentResources = 0,
+                textEntity = GetEntity(authoring.textMesh, TransformUsageFlags.None)
             });
         }
     }
@@ -34,9 +29,5 @@ struct ConstructionSite : IComponentData
     public Entity builtPrefab;
     public int neededResources;
     public int currentResources;
-}
-
-class ConstructionText : IComponentData
-{
-    public TextMesh resourceText;
+    public Entity textEntity;
 }

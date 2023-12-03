@@ -5,13 +5,11 @@ public partial class TestResourceSystem : SystemBase
 {
     protected override void OnUpdate()
     {
-        foreach (var (constructionSite,constructionSiteEntity) in SystemAPI.Query<RefRW<ConstructionSite>>().WithEntityAccess())
+        foreach (var constructionSite in SystemAPI.Query<RefRW<ConstructionSite>>())
         {
-            constructionSite.ValueRW.currentResources += 1;
-            
-
-            SystemAPI.ManagedAPI.GetComponent<ConstructionText>(constructionSiteEntity).resourceText.text =  $"{constructionSite.ValueRW.currentResources}/100";
-            
+            if (Input.GetKey(KeyCode.Space))
+                constructionSite.ValueRW.currentResources += 1;
+            SystemAPI.ManagedAPI.GetComponent<TextMesh>(constructionSite.ValueRW.textEntity).text =  $"{constructionSite.ValueRW.currentResources}/{constructionSite.ValueRW.neededResources}";
         }
     }
 }
