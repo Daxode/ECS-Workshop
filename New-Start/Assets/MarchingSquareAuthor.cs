@@ -8,11 +8,14 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using static CaveGridSystem.Singleton;
 
 class MarchingSquareAuthor : MonoBehaviour
 {
     public MarchSquareSetSprites[] sets;
     public MarchingSquareTile spriteTargetPrefab;
+    public AnimatedSpriteAuthor gridLockPrefab;
 }
 
 [Serializable]
@@ -50,6 +53,7 @@ struct MarchSquareSet : IBufferElementData
 struct MarchSquareData : IComponentData
 {
     public Entity spriteTargetPrefab;
+    public Entity gridLockPrefab;
 }
 
 class MarchingSquareBaker : Baker<MarchingSquareAuthor>
@@ -60,6 +64,7 @@ class MarchingSquareBaker : Baker<MarchingSquareAuthor>
         AddComponent(entity, new MarchSquareData
         {
             spriteTargetPrefab = GetEntity(authoring.spriteTargetPrefab, TransformUsageFlags.Renderable),
+            gridLockPrefab = GetEntity(authoring.gridLockPrefab, TransformUsageFlags.Renderable)
         });
         var buffer = AddBuffer<MarchSquareSet>(entity);
 
@@ -101,6 +106,7 @@ partial struct DebugDrawingSystem : ISystem
         state.RequireForUpdate<CursorSelection>();
         state.RequireForUpdate<CaveGridSystem.Singleton>();
         state.RequireForUpdate<ConstructionSiteElement>();
+        state.RequireForUpdate<MarchSquareData>();
     }
     
     public void OnUpdate(ref SystemState state)
@@ -115,11 +121,14 @@ partial struct DebugDrawingSystem : ISystem
 
         ref var cursorToDraw = ref SystemAPI.GetSingletonRW<CursorSelection>().ValueRW.cursorToDraw;
 
-        if (Input.GetKey(KeyCode.Mouse0) && cursorToDraw.IsOutline())
+        if (Input.GetKeyDown(KeyCode.Mouse1) && cursorToDraw.IsOutline())
+            cursorToDraw.SetDefault();
+        
+        if (Input.GetKeyDown(KeyCode.Mouse0) && cursorToDraw.IsOutline())
         {
             // Get the tile index
             float3 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
-            var tileIndex = CaveGridSystem.Singleton.WorldPosToTileIndex(mousePos.xy);
+            var tileIndex = WorldPosToTileIndex(mousePos.xy);
 
             if (tileIndex >= 0 && tileIndex < caveTiles.Length && caveTiles[tileIndex] == Entity.Null) {
                 // check if valid
@@ -138,6 +147,37 @@ partial struct DebugDrawingSystem : ISystem
                     cursorToDraw.SetDefault();
                 }
             }
+        }
+        
+        // Queue the grid rock to be destroyed
+        if (Input.GetKeyDown(KeyCode.Mouse0) && cursorToDraw.IsDestroy())
+        {
+            // Get the grid index
+            float3 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
+            var (snappedPos, snappedToTile) = SnapToTileOrGrid(mousePos.xy);
+
+            if (snappedToTile)
+            {
+                var tileIndex = WorldPosToTileIndex(snappedPos);
+                if (tileIndex >= 0 && tileIndex < caveTiles.Length && caveTiles[tileIndex] != Entity.Null) {
+                    if (SystemAPI.HasComponent<ConstructionSite>(caveTiles[tileIndex]))
+                    {
+                        state.EntityManager.DestroyEntity(caveTiles[tileIndex]);
+                        caveTiles[tileIndex] = Entity.Null;
+                    }
+                }
+            }
+            else
+            {
+                var gridIndex = WorldPosToGridIndex(snappedPos);
+                if (gridIndex >= 0 && gridIndex < caveGrid.Length && caveGrid[gridIndex] != CaveMaterialType.Air) {
+                    var gridLockPrefab = SystemAPI.GetSingleton<MarchSquareData>().gridLockPrefab;
+                    var gridLockEntity = state.EntityManager.Instantiate(gridLockPrefab);
+                    SystemAPI.SetComponent(gridLockEntity, 
+                        LocalTransform.FromPosition(new float3(SnapWorldPosToGridPos(mousePos.xy), -2)));
+                }
+            }
+
         }
         
         // draw on the cave grid
@@ -186,16 +226,26 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
         public static int WorldPosToTileIndex(float2 worldPos)
         {
             var tilePos = (int2)math.round(worldPos);
-            return tilePos.x + -tilePos.y * CaveGridSystem.Singleton.CaveTilesWidth;
+            return tilePos.x + -tilePos.y * CaveTilesWidth;
         }
     
         public static int2 WorldPosToGridPos(float2 worldPos) => 
             (int2) math.round(worldPos+new float2(0.5f, -0.5f));
+        public static float2 SnapWorldPosToGridPos(float2 worldPos) => 
+            WorldPosToGridPos(worldPos) - new float2(0.5f, -0.5f);
 
         public static int WorldPosToGridIndex(float2 worldPos)
         {
             var gridPos = WorldPosToGridPos(worldPos);
-            return gridPos.x + -gridPos.y * CaveGridSystem.Singleton.CaveGridWidth;
+            return gridPos.x + -gridPos.y * CaveGridWidth;
+        }
+        
+        public static (float2 pos, bool snappedToTile) SnapToTileOrGrid(float2 worldPos)
+        {
+            var gridPos = SnapWorldPosToGridPos(worldPos);
+            var tilePos = math.round(worldPos);
+            var snappedToTile = math.distancesq(worldPos, tilePos) < math.distancesq(worldPos, gridPos);
+            return (math.select(gridPos, tilePos, snappedToTile), snappedToTile);
         }
     }
 
@@ -203,15 +253,15 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        var caveGrid = new NativeList<CaveMaterialType>(Singleton.CaveGridWidth * 128, Allocator.Persistent);
-        var caveTiles = new NativeList<Entity>(Singleton.CaveTilesWidth * 127, Allocator.Persistent);
+        var caveGrid = new NativeList<CaveMaterialType>(CaveGridWidth * 128, Allocator.Persistent);
+        var caveTiles = new NativeList<Entity>(CaveTilesWidth * 127, Allocator.Persistent);
         state.EntityManager.AddComponentData(state.SystemHandle, new Singleton { CaveGrid = caveGrid, CaveTiles = caveTiles});
         caveGrid.Length = caveGrid.Capacity;
         caveTiles.Resize(caveTiles.Capacity, NativeArrayOptions.ClearMemory);
         for (var i = 0; i < caveGrid.Length; i++)
         {
-            var x = i % Singleton.CaveGridWidth;
-            var y = i / Singleton.CaveGridWidth;
+            var x = i % CaveGridWidth;
+            var y = i / CaveGridWidth;
             
             // generate cave grid
             var water = math.select(0, (int)CaveMaterialType.Water, noise.cnoise(new float2(x, -y)*0.1f)>0.4f);     // water
@@ -248,7 +298,7 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
         
         for (var y = 0; y > -caveGridHeight + 1; y--)
         {
-            for (var x = 0; x < Singleton.CaveGridWidth - 1; x++)
+            for (var x = 0; x < CaveGridWidth - 1; x++)
             {
                 // spawn a sprite with the correct offset
                 var spriteTarget = state.EntityManager.Instantiate(spriteTargetPrefab);
@@ -343,10 +393,10 @@ static class CaveSystemExtensions
         if (coord.y > 0) throw new Exception("y must be negative");
 
         // get the 4 corners
-        var i = coord.x + -coord.y * CaveGridSystem.Singleton.CaveGridWidth;
+        var i = coord.x + -coord.y * CaveGridWidth;
         return new int4(
-            (int)caveGrid[i + CaveGridSystem.Singleton.CaveGridWidth], // Bottom Left
-            (int)caveGrid[i + CaveGridSystem.Singleton.CaveGridWidth + 1], // Bottom Right
+            (int)caveGrid[i + CaveGridWidth], // Bottom Left
+            (int)caveGrid[i + CaveGridWidth + 1], // Bottom Right
             (int)caveGrid[i + 1], // Top Right
             (int)caveGrid[i] // Top Left
         );

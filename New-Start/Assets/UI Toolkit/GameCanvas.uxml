@@ -3,5 +3,5 @@
     <ui:VisualElement style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; justify-content: flex-start; flex-direction: column; align-items: flex-end;">
         <ui:VisualElement name="BuildingButtons" style="flex-grow: 1;" />
     </ui:VisualElement>
-    <ui:VisualElement picking-mode="Ignore" name="CursorRenderTexture" style="flex-grow: 1; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-image: url(&apos;project://database/Assets/Materials/UI.renderTexture?fileID=8400000&amp;guid=4419b59008077e74b9b13cfa1a79bb17&amp;type=2#UI&apos;);" />
+    <ui:VisualElement picking-mode="Ignore" name="CursorRenderTexture" focusable="false" style="flex-grow: 1; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-image: url(&apos;project://database/Assets/Materials/UI.renderTexture?fileID=8400000&amp;guid=4419b59008077e74b9b13cfa1a79bb17&amp;type=2#UI&apos;);" />
 </ui:UXML>

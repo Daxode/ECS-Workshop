@@ -21,28 +21,42 @@ public struct CursorSelection : IComponentData
     
     public enum CursorToDraw
     {
-        Default,
-        OnObject,
-        DefaultDraw,
-        OnObjectDraw,
+        DestroyDefault,
+        DestroyOnObject,
+        SelectDefault,
+        SelectOnObject,
+        DrawDefault,
+        DrawOnObject,
         LadderOutline,
         WorkshopOutline,
         StockpileOutline,
-        ShovelTool,
     }
 }
 public static class CursorToDrawExtensions
 {
+    public static bool IsSelected(this CursorSelection.CursorToDraw cursorToDraw) 
+        => cursorToDraw is CursorSelection.CursorToDraw.SelectDefault or CursorSelection.CursorToDraw.SelectOnObject;
     public static bool IsDrawn(this CursorSelection.CursorToDraw cursorToDraw) 
-        => cursorToDraw is CursorSelection.CursorToDraw.DefaultDraw or CursorSelection.CursorToDraw.OnObjectDraw;
-    public static void SetOnObject(this ref CursorSelection.CursorToDraw cursorToDraw) 
-        => cursorToDraw = cursorToDraw.IsDrawn() ? CursorSelection.CursorToDraw.OnObjectDraw : CursorSelection.CursorToDraw.OnObject;
-    public static void SetDefault(this ref CursorSelection.CursorToDraw cursorToDraw)
-        => cursorToDraw = cursorToDraw.IsDrawn() ? CursorSelection.CursorToDraw.DefaultDraw : CursorSelection.CursorToDraw.Default;
+        => cursorToDraw is CursorSelection.CursorToDraw.DrawDefault or CursorSelection.CursorToDraw.DrawOnObject;
+    public static bool IsDestroy(this CursorSelection.CursorToDraw cursorToDraw) 
+        => cursorToDraw is CursorSelection.CursorToDraw.DestroyDefault or CursorSelection.CursorToDraw.DestroyOnObject;
     public static bool IsInDefaultMode(this CursorSelection.CursorToDraw cursorToDraw)
-        => cursorToDraw is CursorSelection.CursorToDraw.Default or CursorSelection.CursorToDraw.OnObject || cursorToDraw.IsDrawn();
+        => cursorToDraw.IsDrawn() || cursorToDraw.IsSelected() || cursorToDraw.IsDestroy();
     public static bool IsOutline(this CursorSelection.CursorToDraw cursorToDraw)
         => cursorToDraw is CursorSelection.CursorToDraw.LadderOutline or CursorSelection.CursorToDraw.WorkshopOutline or CursorSelection.CursorToDraw.StockpileOutline;
+    
+    public static void SetOnObject(this ref CursorSelection.CursorToDraw cursorToDraw) 
+        => cursorToDraw = cursorToDraw.IsDrawn() 
+            ? CursorSelection.CursorToDraw.DrawOnObject 
+            : cursorToDraw.IsDestroy() 
+                ? CursorSelection.CursorToDraw.DestroyOnObject
+                : CursorSelection.CursorToDraw.SelectOnObject;
+    public static void SetDefault(this ref CursorSelection.CursorToDraw cursorToDraw)
+        => cursorToDraw = cursorToDraw.IsDrawn() 
+            ? CursorSelection.CursorToDraw.DrawDefault 
+            : cursorToDraw.IsDestroy() 
+                ? CursorSelection.CursorToDraw.DestroyDefault
+                : CursorSelection.CursorToDraw.SelectDefault;
 }
 
 struct GridSnappedTag : IComponentData {}
@@ -55,7 +69,6 @@ partial struct CursorSystem : ISystem
     {
         state.RequireForUpdate<CursorSelection>();
         state.RequireForUpdate<GridSnappedTag>();
-        state.RequireForUpdate<TileSnappedTag>();
         
         Cursor.visible = false;
     }
@@ -67,8 +80,8 @@ partial struct CursorSystem : ISystem
         
         // Get mouse position in world and round to nearest grid cell 
         var mousePos = (float3) camera.ScreenToWorldPoint(Input.mousePosition);
-        var gridSnappedPos = (math.round(mousePos.xy+new float2(0.5f, -0.5f))) - new float2(0.5f, -0.5f);
-        var tileSnappedPos = (math.round(mousePos.xy+new float2(0.0f, 0.0f))) - new float2(0.0f, 0.0f);
+        var gridSnappedPos = CaveGridSystem.Singleton.SnapWorldPosToGridPos(mousePos.xy);
+        var tileSnappedPos = math.round(mousePos.xy);
         
         // Setup cursor data
         var cursorEntity = SystemAPI.GetSingletonEntity<CursorSelection>();
@@ -76,18 +89,16 @@ partial struct CursorSystem : ISystem
         ref var cursorSelection = ref SystemAPI.GetComponentRW<CursorSelection>(cursorEntity).ValueRW;
         SystemAPI.SetComponent(cursorEntity, new LocalToWorld
         {
-            Value = float4x4.Translate(new float3(mousePos.xy, -2))
+            Value = float4x4.Translate(new float3(mousePos.xy, -3f))
         });
         
         // Hide cursor heads
-        var tileSnapEntity = SystemAPI.GetSingletonEntity<TileSnappedTag>();
-        SystemAPI.SetComponent(tileSnapEntity, default(LocalToWorld));
         var gridSnapEntity = SystemAPI.GetSingletonEntity<GridSnappedTag>();
         SystemAPI.SetComponent(gridSnapEntity, default(LocalToWorld));
         
 
         // Check if mouse is on object
-        if (cursorSelection.cursorToDraw.IsInDefaultMode())
+        if (cursorSelection.cursorToDraw.IsDrawn())
         {
             // Check if mouse is on object
             if (math.distancesq(mousePos.xy, gridSnappedPos) < 0.1f)
@@ -95,9 +106,34 @@ partial struct CursorSystem : ISystem
                 // Snaps cursor head to grid
                 SystemAPI.SetComponent(gridSnapEntity, new LocalToWorld
                 {
-                    Value = float4x4.Translate(new float3(gridSnappedPos, -2))
+                    Value = float4x4.Translate(new float3(gridSnappedPos, -2f))
                 });
                 cursorSelection.cursorToDraw.SetOnObject();
+                var gridSpriteIndex = cursorSelection.cursorToDraw.IsDestroy() ? 1 : 0;
+                var gridSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(gridSnapEntity)[gridSpriteIndex].offset;
+                SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(gridSnapEntity).ValueRW.Value.xy = gridSpriteOffset;
+            }
+            else
+                cursorSelection.cursorToDraw.SetDefault();
+        }
+        
+        // Check if mouse is on object
+        if (cursorSelection.cursorToDraw.IsSelected() || cursorSelection.cursorToDraw.IsDestroy())
+        {
+            var (snappedPos, _) = CaveGridSystem.Singleton.SnapToTileOrGrid(mousePos.xy);
+            
+            // Check if mouse is on object
+            if (math.distancesq(mousePos.xy, snappedPos) < 0.1f)
+            {
+                // Snaps cursor head to grid
+                SystemAPI.SetComponent(gridSnapEntity, new LocalToWorld
+                {
+                    Value = float4x4.Translate(new float3(snappedPos, -2f))
+                });
+                cursorSelection.cursorToDraw.SetOnObject();
+                var gridSpriteIndex = cursorSelection.cursorToDraw.IsDestroy() ? 1 : 0;
+                var gridSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(gridSnapEntity)[gridSpriteIndex].offset;
+                SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(gridSnapEntity).ValueRW.Value.xy = gridSpriteOffset;
             }
             else
                 cursorSelection.cursorToDraw.SetDefault();
@@ -106,12 +142,13 @@ partial struct CursorSystem : ISystem
         if (cursorSelection.cursorToDraw.IsOutline())
         {
             // Snaps cursor head to grid
-            SystemAPI.SetComponent(tileSnapEntity, new LocalToWorld
+            SystemAPI.SetComponent(gridSnapEntity, new LocalToWorld
             {
-                Value = float4x4.Translate(new float3(tileSnappedPos, -2))
+                Value = float4x4.Translate(new float3(tileSnappedPos, -2f))
             });
-            SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(cursorEntity).ValueRW.Value.xy = SystemAPI.GetBuffer<SpriteFrameElement>(tileSnapEntity)[0].offset;
-            cursorEntity = tileSnapEntity;
+            var tileSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(gridSnapEntity)[0].offset;
+            SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(cursorEntity).ValueRW.Value.xy = tileSpriteOffset;
+            cursorEntity = gridSnapEntity;
         }
         
         SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(cursorEntity).ValueRW.Value.xy = cursorSpriteOffsets[(int)cursorSelection.cursorToDraw].offset;
