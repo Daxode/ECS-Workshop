@@ -43,18 +43,18 @@ static class NavigationExtensions
         
         public static NavigationIndexes FromTilePos(int x, int y)
         {
-            var gridIndex = (x * 2) + (-y * 2 * NavigationSystem.gridWidth);
+            var gridIndex = (x * 2) + (-y * 2 * NavigationSystem.navWidth);
             return new NavigationIndexes
             {
                 gridTL = gridIndex,
                 gridTC = gridIndex + 1,
                 gridTR = gridIndex + 2,
-                gridCL = gridIndex + NavigationSystem.gridWidth,
-                gridCC = gridIndex + NavigationSystem.gridWidth + 1,
-                gridCR = gridIndex + NavigationSystem.gridWidth + 2,
-                gridBL = gridIndex + NavigationSystem.gridWidth * 2,
-                gridBC = gridIndex + NavigationSystem.gridWidth * 2 + 1,
-                gridBR = gridIndex + NavigationSystem.gridWidth * 2 + 2
+                gridCL = gridIndex + NavigationSystem.navWidth,
+                gridCC = gridIndex + NavigationSystem.navWidth + 1,
+                gridCR = gridIndex + NavigationSystem.navWidth + 2,
+                gridBL = gridIndex + NavigationSystem.navWidth * 2,
+                gridBC = gridIndex + NavigationSystem.navWidth * 2 + 1,
+                gridBR = gridIndex + NavigationSystem.navWidth * 2 + 2
             };
         }
     }
@@ -86,16 +86,17 @@ partial struct NavigationSystem : ISystem, ISystemStartStop
         Air,
         Ground,
         Obstructed,
-        UnObtainable,
+        JumpDown,
+        JumpUpDown,
     }
 
-    public const int gridWidth = (CaveGridSystem.Singleton.CaveGridWidth * 2) - 1;
+    public const int navWidth = (CaveGridSystem.Singleton.CaveGridWidth * 2) - 1;
     Pathfinder m_Pathfinder;
     
     public void OnCreate(ref SystemState state)
     {
-        m_NavigationGrid = new NativeList<NodeType>(gridWidth*(128*2-1), Allocator.Persistent);
-        m_NavigationGrid.Resize(gridWidth*(128*2-1), NativeArrayOptions.ClearMemory);
+        m_NavigationGrid = new NativeList<NodeType>(navWidth*(128*2-1), Allocator.Persistent);
+        m_NavigationGrid.Resize(navWidth*(128*2-1), NativeArrayOptions.ClearMemory);
         m_Pathfinder = new Pathfinder(m_NavigationGrid.Length, Allocator.Persistent);
         
         state.RequireForUpdate<MarchSquareData>();
@@ -105,10 +106,10 @@ partial struct NavigationSystem : ISystem, ISystemStartStop
     public void OnStartRunning(ref SystemState state)
     {
         var gridLockPrefab = SystemAPI.GetSingleton<MarchSquareData>().gridLockPrefab;
-        var gridHeight = m_NavigationGrid.Length / gridWidth;
+        var gridHeight = m_NavigationGrid.Length / navWidth;
         for (var y = 0; y > -gridHeight; y--)
         {
-            for (var x = 0; x < gridWidth; x++)
+            for (var x = 0; x < navWidth; x++)
             {
                 // spawn a sprite with the correct offset
                 var spriteTarget = state.EntityManager.Instantiate(gridLockPrefab);
@@ -250,6 +251,42 @@ partial struct NavigationSystem : ISystem, ISystemStartStop
                 }
             }
         }
+
+        // Find green, and if blue up and down, set all blues to jump down until first non blue
+        for (int navIndex = 0; navIndex < m_NavigationGrid.Length; navIndex++)
+        {
+            if (m_NavigationGrid[navIndex] == NodeType.Ground)
+            {
+                var neighborU = navIndex - navWidth;
+                var current = navIndex;
+                var neighborD = navIndex + navWidth;
+                if (neighborU < 0 || neighborD >= m_NavigationGrid.Length) continue;
+
+                while (m_NavigationGrid[neighborU] is NodeType.Air or NodeType.JumpDown or NodeType.Ground
+                       && m_NavigationGrid[neighborD] is NodeType.Air or NodeType.JumpDown)
+                {
+                    m_NavigationGrid[neighborD] = NodeType.JumpDown;
+                    
+                    neighborU = current;
+                    current = neighborD;
+                    neighborD += navWidth;
+                    if (neighborD >= m_NavigationGrid.Length) break;
+                }
+            }
+        }
+        
+        // Find jump down and set jump up if there is ground above
+        for (int navIndex = 0; navIndex < m_NavigationGrid.Length; navIndex++)
+        {
+            if (m_NavigationGrid[navIndex] == NodeType.JumpDown)
+            {
+                var neighborU = navIndex - navWidth;
+                var neighborD = navIndex + navWidth;
+                if (neighborU < 0 || neighborD >= m_NavigationGrid.Length) continue;
+                if (m_NavigationGrid[neighborU] == NodeType.Ground && m_NavigationGrid[neighborD] == NodeType.Ground)
+                    m_NavigationGrid[navIndex] = NodeType.JumpUpDown;
+            }
+        }
         
         // change color based on grid
         foreach (var (lt, colorRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideCornerStrength>>().WithAll<NavigationGridLockTag>())
@@ -261,13 +298,15 @@ partial struct NavigationSystem : ISystem, ISystemStartStop
             }
             
             var gridPos = lt.Position.xy * 2 + new float2(1, -1);
-            var navigationGridIndex = (int)gridPos.x + (int)-gridPos.y * gridWidth;
+            var navigationGridIndex = (int)gridPos.x + (int)-gridPos.y * navWidth;
             
             colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex] switch
             {
                 NodeType.Ground => (Vector4)Color.green,
-                NodeType.Air => (Vector4)Color.blue,
-                NodeType.Obstructed => (Vector4)Color.red,
+                NodeType.Air => (Vector4)new Color(0.27f, 0.23f, 0.36f) ,
+                NodeType.Obstructed => (Vector4)new Color(0.39f, 0.24f, 0.19f),
+                NodeType.JumpDown => (Vector4)Color.yellow,
+                NodeType.JumpUpDown => (Vector4)Color.cyan,
                 _ => (Vector4)Color.clear
             };
         }
