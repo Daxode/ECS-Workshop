@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7674583555115951718}
   - component: {fileID: 7424255362958424500}
   - component: {fileID: 2937350006598376876}
+  - component: {fileID: 5470135217283343159}
   - component: {fileID: 3221162173178761237}
   - component: {fileID: 8231727848038875121}
   m_Layer: 0
@@ -33,8 +34,7 @@ Transform:
   m_LocalPosition: {x: 4.407, y: 3.764, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 7523715697615007752}
+  m_Children: [{fileID: 7523715697615007752}]
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &7674583555115951718
@@ -104,6 +104,18 @@ MonoBehaviour:
   - {fileID: -1200956324, guid: b3ded538870f6af44ab9303b657de248, type: 3}
   - {fileID: 419541649, guid: b3ded538870f6af44ab9303b657de248, type: 3}
   - {fileID: 1755615749, guid: b3ded538870f6af44ab9303b657de248, type: 3}
+--- !u!114 &5470135217283343159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1140044823623038383}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72a4e9fd9e1743da919784c799b77c98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &3221162173178761237
 MonoBehaviour:
   m_ObjectHideFlags: 0
