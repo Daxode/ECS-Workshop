@@ -53,6 +53,10 @@ partial struct HealthSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        if (Input.GetKeyDown(KeyCode.Space))
+            foreach (var data in SystemAPI.Query<RefRW<HealthData>>().WithAll<Selectable>()) 
+                data.ValueRW.health--;
+
         // ReSharper disable once Unity.Entities.SingletonMustBeRequested - Reason: this is known to always exist
         var ecb = SystemAPI
             .GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
