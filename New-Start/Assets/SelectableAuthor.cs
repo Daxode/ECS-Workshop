@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Entities;
@@ -32,6 +33,50 @@ struct WalkState : IComponentData
 }
 
 
+static class NavigationExtensions
+{
+    public struct NavigationIndexes
+    {
+        public int gridTL, gridTC, gridTR;
+        public int gridCL, gridCC, gridCR;
+        public int gridBL, gridBC, gridBR;
+        
+        public static NavigationIndexes FromTilePos(int x, int y)
+        {
+            var gridIndex = (x * 2) + (-y * 2 * NavigationSystem.gridWidth);
+            return new NavigationIndexes
+            {
+                gridTL = gridIndex,
+                gridTC = gridIndex + 1,
+                gridTR = gridIndex + 2,
+                gridCL = gridIndex + NavigationSystem.gridWidth,
+                gridCC = gridIndex + NavigationSystem.gridWidth + 1,
+                gridCR = gridIndex + NavigationSystem.gridWidth + 2,
+                gridBL = gridIndex + NavigationSystem.gridWidth * 2,
+                gridBC = gridIndex + NavigationSystem.gridWidth * 2 + 1,
+                gridBR = gridIndex + NavigationSystem.gridWidth * 2 + 2
+            };
+        }
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SetNavigation(this NativeList<NavigationSystem.NodeType> navGrid, ref NavigationIndexes indexes,
+        NavigationSystem.NodeType tl, NavigationSystem.NodeType tc, NavigationSystem.NodeType tr, 
+        NavigationSystem.NodeType cl, NavigationSystem.NodeType cc, NavigationSystem.NodeType cr, 
+        NavigationSystem.NodeType bl, NavigationSystem.NodeType bc, NavigationSystem.NodeType br)
+    {
+        navGrid[indexes.gridTL] = tl;
+        navGrid[indexes.gridTC] = tc;
+        navGrid[indexes.gridTR] = tr;
+        navGrid[indexes.gridCL] = cl;
+        navGrid[indexes.gridCC] = cc;
+        navGrid[indexes.gridCR] = cr;
+        navGrid[indexes.gridBL] = bl;
+        navGrid[indexes.gridBC] = bc;
+        navGrid[indexes.gridBR] = br;
+    }
+}
+
 partial struct NavigationSystem : ISystem, ISystemStartStop
 {
     NativeList<NodeType> m_NavigationGrid;
@@ -44,13 +89,13 @@ partial struct NavigationSystem : ISystem, ISystemStartStop
         UnObtainable,
     }
 
-    const int k_GridWidth = (CaveGridSystem.Singleton.CaveGridWidth * 2) - 1;
+    public const int gridWidth = (CaveGridSystem.Singleton.CaveGridWidth * 2) - 1;
     Pathfinder m_Pathfinder;
     
     public void OnCreate(ref SystemState state)
     {
-        m_NavigationGrid = new NativeList<NodeType>(k_GridWidth*(128*2-1), Allocator.Persistent);
-        m_NavigationGrid.Resize(k_GridWidth*(128*2-1), NativeArrayOptions.ClearMemory);
+        m_NavigationGrid = new NativeList<NodeType>(gridWidth*(128*2-1), Allocator.Persistent);
+        m_NavigationGrid.Resize(gridWidth*(128*2-1), NativeArrayOptions.ClearMemory);
         m_Pathfinder = new Pathfinder(m_NavigationGrid.Length, Allocator.Persistent);
         
         state.RequireForUpdate<MarchSquareData>();
@@ -60,10 +105,10 @@ partial struct NavigationSystem : ISystem, ISystemStartStop
     public void OnStartRunning(ref SystemState state)
     {
         var gridLockPrefab = SystemAPI.GetSingleton<MarchSquareData>().gridLockPrefab;
-        var gridHeight = m_NavigationGrid.Length / k_GridWidth;
+        var gridHeight = m_NavigationGrid.Length / gridWidth;
         for (var y = 0; y > -gridHeight; y--)
         {
-            for (var x = 0; x < k_GridWidth; x++)
+            for (var x = 0; x < gridWidth; x++)
             {
                 // spawn a sprite with the correct offset
                 var spriteTarget = state.EntityManager.Instantiate(gridLockPrefab);
@@ -95,7 +140,6 @@ partial struct NavigationSystem : ISystem, ISystemStartStop
         {
             for (var tileX = 0; tileX < CaveGridSystem.Singleton.CaveTilesWidth; tileX++)
             {
-                
                 var cornerIndex = tileX + (-tileY * CaveGridSystem.Singleton.CaveGridWidth);
                 var tl = corners[cornerIndex] == CaveMaterialType.Air ? 0 : 1;
                 var tr = corners[cornerIndex + 1] == CaveMaterialType.Air ? 0 : 1;
@@ -103,212 +147,105 @@ partial struct NavigationSystem : ISystem, ISystemStartStop
                 var br = corners[cornerIndex + CaveGridSystem.Singleton.CaveGridWidth + 1] == CaveMaterialType.Air ? 0 : 1;
                 var marchSquareIndex = bl | (br << 1) | (tr << 2) | (tl << 3);
                 
-                var gridIndex = (tileX * 2) + (-tileY * 2 * k_GridWidth);
-                var gridTL = gridIndex;
-                var gridTC = gridIndex + 1;
-                var gridTR = gridIndex + 2;
-                var gridCL = gridIndex + k_GridWidth;
-                var gridCC = gridIndex + k_GridWidth + 1;
-                var gridCR = gridIndex + k_GridWidth + 2;
-                var gridBL = gridIndex + k_GridWidth * 2;
-                var gridBC = gridIndex + k_GridWidth * 2 + 1;
-                var gridBR = gridIndex + k_GridWidth * 2 + 2;
-
+                var navIndexes = NavigationExtensions.NavigationIndexes.FromTilePos(tileX, tileY);
+                // Switch on the 4 corners of the square to select where ground is
                 switch (marchSquareIndex)
                 {
-                    case 0: // done
-                        m_NavigationGrid[gridTL] = NodeType.Air;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Air;
-                        m_NavigationGrid[gridCL] = NodeType.Air;
-                        m_NavigationGrid[gridCC] = NodeType.Air;
-                        m_NavigationGrid[gridCR] = NodeType.Air;
-                        m_NavigationGrid[gridBL] = NodeType.Air;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Air;
+                    case 0: // 0000
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Air, NodeType.Air, NodeType.Air,
+                            NodeType.Air, NodeType.Air, NodeType.Air,
+                            NodeType.Air, NodeType.Air, NodeType.Air);
                         break;
-                    case 4: // done
-                        m_NavigationGrid[gridTL] = NodeType.Air;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Obstructed;
-                        m_NavigationGrid[gridCL] = NodeType.Air;
-                        m_NavigationGrid[gridCC] = NodeType.Air;
-                        m_NavigationGrid[gridCR] = NodeType.Air;
-                        m_NavigationGrid[gridBL] = NodeType.Air;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Air;
+                    case 1: // 0001
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Air, NodeType.Air, NodeType.Air,
+                            NodeType.Ground, NodeType.Ground, NodeType.Air,
+                            NodeType.Obstructed, NodeType.Air, NodeType.Air);
                         break;
-                    case 6: // done
-                        m_NavigationGrid[gridTL] = NodeType.Air;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Obstructed;
-                        m_NavigationGrid[gridCL] = NodeType.Air;
-                        m_NavigationGrid[gridCC] = NodeType.Air;
-                        m_NavigationGrid[gridCR] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBL] = NodeType.Air;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Obstructed;
+                    case 2: // 0010
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Air, NodeType.Air, NodeType.Air,
+                            NodeType.Air, NodeType.Ground, NodeType.Ground,
+                            NodeType.Air, NodeType.Air, NodeType.Obstructed);
                         break;
-                    case 8: // done
-                        m_NavigationGrid[gridTL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Air;
-                        m_NavigationGrid[gridCL] = NodeType.Air;
-                        m_NavigationGrid[gridCC] = NodeType.Air;
-                        m_NavigationGrid[gridCR] = NodeType.Air;
-                        m_NavigationGrid[gridBL] = NodeType.Air;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Air;
+                    case 3: // 0011
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Air, NodeType.Air, NodeType.Air,
+                            NodeType.Ground, NodeType.Ground, NodeType.Ground,
+                            NodeType.Obstructed, NodeType.Obstructed, NodeType.Obstructed);
                         break;
-                    case 9: // done
-                        m_NavigationGrid[gridTL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Air;
-                        m_NavigationGrid[gridCL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridCC] = NodeType.Air;
-                        m_NavigationGrid[gridCR] = NodeType.Air;
-                        m_NavigationGrid[gridBL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Air;
+                    case 4: // 0100
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Air, NodeType.Air, NodeType.Obstructed,
+                            NodeType.Air, NodeType.Air, NodeType.Air,
+                            NodeType.Air, NodeType.Air, NodeType.Air);
                         break;
-                    case 12:
-                        m_NavigationGrid[gridTL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTC] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTR] = NodeType.Obstructed;
-                        m_NavigationGrid[gridCL] = NodeType.Air;
-                        m_NavigationGrid[gridCC] = NodeType.Air;
-                        m_NavigationGrid[gridCR] = NodeType.Air;
-                        m_NavigationGrid[gridBL] = NodeType.Air;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Air;
+                    case 5: // 0101
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Air, NodeType.Air, NodeType.Obstructed,
+                            NodeType.Ground, NodeType.Ground, NodeType.Air,
+                            NodeType.Obstructed, NodeType.Air, NodeType.Air);
                         break;
-                    case 13:
-                        m_NavigationGrid[gridTL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTC] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTR] = NodeType.Obstructed;
-                        m_NavigationGrid[gridCL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridCC] = NodeType.Air;
-                        m_NavigationGrid[gridCR] = NodeType.Air;
-                        m_NavigationGrid[gridBL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Air;
+                    case 6: // 0110
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Air, NodeType.Air, NodeType.Obstructed,
+                            NodeType.Air, NodeType.Air, NodeType.Obstructed,
+                            NodeType.Air, NodeType.Air, NodeType.Obstructed);
                         break;
-                    case 14:
-                        m_NavigationGrid[gridTL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTC] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTR] = NodeType.Obstructed;
-                        
-                        m_NavigationGrid[gridCL] = NodeType.Air;
-                        m_NavigationGrid[gridCC] = NodeType.Air;
-                        m_NavigationGrid[gridCR] = NodeType.Obstructed;
-                        
-                        m_NavigationGrid[gridBL] = NodeType.Air;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Obstructed;
+                    case 7: // 0111
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Air, NodeType.Air, NodeType.Obstructed,
+                            NodeType.Ground, NodeType.Ground, NodeType.Obstructed,
+                            NodeType.Obstructed, NodeType.Obstructed, NodeType.Obstructed);
                         break;
-                    case 15:
-                        m_NavigationGrid[gridTL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTC] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTR] = NodeType.Obstructed;
-                        
-                        m_NavigationGrid[gridCL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridCC] = NodeType.Obstructed;
-                        m_NavigationGrid[gridCR] = NodeType.Obstructed;
-                        
-                        m_NavigationGrid[gridBL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBC] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBR] = NodeType.Obstructed;
+                    case 8: // 1000
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Obstructed, NodeType.Air, NodeType.Air,
+                            NodeType.Air, NodeType.Air, NodeType.Air,
+                            NodeType.Air, NodeType.Air, NodeType.Air);
                         break;
-                    case 1:
-                        m_NavigationGrid[gridTL] = NodeType.Air;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Air;
-                        
-                        m_NavigationGrid[gridCL] = NodeType.Ground;
-                        m_NavigationGrid[gridCC] = NodeType.Ground;
-                        m_NavigationGrid[gridCR] = NodeType.Air;
-                        
-                        m_NavigationGrid[gridBL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Air;
+                    case 9: // 1001
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Obstructed, NodeType.Air, NodeType.Air,
+                            NodeType.Obstructed, NodeType.Air, NodeType.Air,
+                            NodeType.Obstructed, NodeType.Air, NodeType.Air);
                         break;
-                    case 2:
-                        m_NavigationGrid[gridTL] = NodeType.Air;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Air;
-                        
-                        m_NavigationGrid[gridCL] = NodeType.Air;
-                        m_NavigationGrid[gridCC] = NodeType.Ground;
-                        m_NavigationGrid[gridCR] = NodeType.Ground;
-                        
-                        m_NavigationGrid[gridBL] = NodeType.Air;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Obstructed;
+                    case 10: // 1010
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Obstructed, NodeType.Air, NodeType.Air,
+                            NodeType.Air, NodeType.Ground, NodeType.Ground,
+                            NodeType.Air, NodeType.Air, NodeType.Obstructed);
                         break;
-                    case 3:
-                        m_NavigationGrid[gridTL] = NodeType.Air;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Air;
-                        
-                        m_NavigationGrid[gridCL] = NodeType.Ground;
-                        m_NavigationGrid[gridCC] = NodeType.Ground;
-                        m_NavigationGrid[gridCR] = NodeType.Ground;
-                        
-                        m_NavigationGrid[gridBL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBC] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBR] = NodeType.Obstructed;
+                    case 11: // 1011
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Obstructed, NodeType.Air, NodeType.Air,
+                            NodeType.Obstructed, NodeType.Ground, NodeType.Ground,
+                            NodeType.Obstructed, NodeType.Obstructed, NodeType.Obstructed);
                         break;
-                    case 5:
-                        m_NavigationGrid[gridTL] = NodeType.Air;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Obstructed;
-                        
-                        m_NavigationGrid[gridCL] = NodeType.Ground;
-                        m_NavigationGrid[gridCC] = NodeType.Ground;
-                        m_NavigationGrid[gridCR] = NodeType.Air;
-                        
-                        m_NavigationGrid[gridBL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Air;
+                    case 12: // 1100
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Obstructed, NodeType.Obstructed, NodeType.Obstructed,
+                            NodeType.Air, NodeType.Air, NodeType.Air,
+                            NodeType.Air, NodeType.Air, NodeType.Air);
                         break;
-                    case 7:
-                        m_NavigationGrid[gridTL] = NodeType.Air;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Obstructed;
-                        
-                        m_NavigationGrid[gridCL] = NodeType.Ground;
-                        m_NavigationGrid[gridCC] = NodeType.Ground;
-                        m_NavigationGrid[gridCR] = NodeType.Obstructed;
-                        
-                        m_NavigationGrid[gridBL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBC] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBR] = NodeType.Obstructed;
+                    case 13: // 1101
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Obstructed, NodeType.Obstructed, NodeType.Obstructed,
+                            NodeType.Obstructed, NodeType.Air, NodeType.Air,
+                            NodeType.Obstructed, NodeType.Air, NodeType.Air);
                         break;
-                    case 10:
-                        m_NavigationGrid[gridTL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Air;
-                        
-                        m_NavigationGrid[gridCL] = NodeType.Air;
-                        m_NavigationGrid[gridCC] = NodeType.Ground;
-                        m_NavigationGrid[gridCR] = NodeType.Ground;
-                        
-                        m_NavigationGrid[gridBL] = NodeType.Air;
-                        m_NavigationGrid[gridBC] = NodeType.Air;
-                        m_NavigationGrid[gridBR] = NodeType.Obstructed;
+                    case 14: // 1110
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Obstructed, NodeType.Obstructed, NodeType.Obstructed,
+                            NodeType.Air, NodeType.Air, NodeType.Obstructed,
+                            NodeType.Air, NodeType.Air, NodeType.Obstructed);
                         break;
-                    case 11:
-                        m_NavigationGrid[gridTL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridTC] = NodeType.Air;
-                        m_NavigationGrid[gridTR] = NodeType.Air;
-                        
-                        m_NavigationGrid[gridCL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridCC] = NodeType.Ground;
-                        m_NavigationGrid[gridCR] = NodeType.Ground;
-                        
-                        m_NavigationGrid[gridBL] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBC] = NodeType.Obstructed;
-                        m_NavigationGrid[gridBR] = NodeType.Obstructed;
+                    case 15: // 1111
+                        m_NavigationGrid.SetNavigation(ref navIndexes,
+                            NodeType.Obstructed, NodeType.Obstructed, NodeType.Obstructed,
+                            NodeType.Obstructed, NodeType.Obstructed, NodeType.Obstructed,
+                            NodeType.Obstructed, NodeType.Obstructed, NodeType.Obstructed);
                         break;
                 }
             }
@@ -324,7 +261,7 @@ partial struct NavigationSystem : ISystem, ISystemStartStop
             }
             
             var gridPos = lt.Position.xy * 2 + new float2(1, -1);
-            var navigationGridIndex = (int)gridPos.x + (int)-gridPos.y * k_GridWidth;
+            var navigationGridIndex = (int)gridPos.x + (int)-gridPos.y * gridWidth;
             
             colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex] switch
             {
