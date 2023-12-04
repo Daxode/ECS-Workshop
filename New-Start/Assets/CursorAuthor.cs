@@ -120,18 +120,9 @@ partial struct CursorSystem : ISystem
         }
         
         // Check if mouse is on object
-        if (cursorSelection.cursorToDraw.IsSelected() || cursorSelection.cursorToDraw.IsDestroy())
+        if (cursorSelection.cursorToDraw.IsDestroy())
         {
             var (snappedPos, _) = CaveGridSystem.Singleton.SnapToTileOrGrid(mousePos.xy);
-            
-            cursorSelection.hoveredEntity = Entity.Null;
-            foreach (var (ltw, e) in SystemAPI.Query<LocalToWorld>().WithAll<Selectable>().WithEntityAccess().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
-            {
-                var slimePos = ltw.Value.c3.xy;
-                var slimeIsCloser = math.distancesq(mousePos.xy, slimePos) < math.distancesq(mousePos.xy, snappedPos);
-                snappedPos =  slimeIsCloser ? slimePos : snappedPos;
-                cursorSelection.hoveredEntity = slimeIsCloser ? e : cursorSelection.hoveredEntity;
-            }
             
             // Check if mouse is on object
             if (math.distancesq(mousePos.xy, snappedPos) < 0.1f)
@@ -142,8 +133,40 @@ partial struct CursorSystem : ISystem
                     Value = float4x4.Translate(new float3(snappedPos, -2f))
                 });
                 cursorSelection.cursorToDraw.SetOnObject();
-                var gridSpriteIndex = cursorSelection.cursorToDraw.IsDestroy() ? 1 : 0;
-                var gridSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(headEntity)[gridSpriteIndex].offset;
+                var gridSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(headEntity)[1].offset;
+                SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(headEntity).ValueRW.Value.xy = gridSpriteOffset;
+            }
+            else
+                cursorSelection.cursorToDraw.SetDefault();
+        }
+        
+        // Check if mouse is on object
+        if (cursorSelection.cursorToDraw.IsSelected())
+        {
+            var minDistSq = float.MaxValue;
+            var snappedPos = float2.zero;
+            cursorSelection.hoveredEntity = Entity.Null;
+            foreach (var (ltw, slimeEntity) in SystemAPI.Query<LocalToWorld>().WithAll<Selectable>().WithEntityAccess().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+            {
+                var slimePos = ltw.Value.c3.xy;
+                var distToSlime = math.distancesq(mousePos.xy, slimePos);
+                var slimeIsCloser = distToSlime < minDistSq;
+                minDistSq = slimeIsCloser ? distToSlime : minDistSq;
+                cursorSelection.hoveredEntity = slimeIsCloser ? slimeEntity : cursorSelection.hoveredEntity;
+                snappedPos = slimeIsCloser ? slimePos : snappedPos;
+            }
+            cursorSelection.hoveredEntity = minDistSq < 0.1f ? cursorSelection.hoveredEntity : Entity.Null;
+            
+            // Check if mouse is on object
+            if (math.distancesq(mousePos.xy, snappedPos) < 0.1f)
+            {
+                // Snaps cursor head to grid
+                SystemAPI.SetComponent(headEntity, new LocalToWorld
+                {
+                    Value = float4x4.Translate(new float3(snappedPos, -2f))
+                });
+                cursorSelection.cursorToDraw.SetOnObject();
+                var gridSpriteOffset = SystemAPI.GetBuffer<SpriteFrameElement>(headEntity)[0].offset;
                 SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(headEntity).ValueRW.Value.xy = gridSpriteOffset;
             }
             else

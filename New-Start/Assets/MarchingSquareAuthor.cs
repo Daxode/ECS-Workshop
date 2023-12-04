@@ -334,10 +334,25 @@ partial struct DebugDrawingSystem : ISystem
 
         }
 
-        if (Input.GetKeyDown(KeyCode.Mouse0) && cursorToDraw.IsSelected())
+        if (cursorToDraw.IsSelected())
         {
-            if (cursorSelection.hoveredEntity != Entity.Null)
-                SystemAPI.SetComponentEnabled<Selectable>(cursorSelection.hoveredEntity, true);
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                if (cursorSelection.hoveredEntity != Entity.Null)
+                {
+                    var isAlreadySelected = SystemAPI.IsComponentEnabled<Selectable>(cursorSelection.hoveredEntity);
+                    SystemAPI.SetComponentEnabled<Selectable>(cursorSelection.hoveredEntity, !isAlreadySelected);
+                }
+            } else if (Input.GetKeyDown(KeyCode.Mouse1))
+            {
+                float3 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
+                var (snappedPos, snappedToTile) = SnapToTileOrGrid(mousePos.xy);
+                foreach (var (walkState, selectState) in SystemAPI.Query<RefRW<WalkState>, EnabledRefRW<Selectable>>().WithAll<Selectable>())
+                {
+                    walkState.ValueRW.target = snappedPos;
+                    selectState.ValueRW = false;
+                }
+            }
         }
         
         
