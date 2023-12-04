@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using Unity.Burst;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Entities;
@@ -129,6 +130,7 @@ partial struct NavigationSystem : ISystem, ISystemStartStop
     
     bool showDebugGrid;
 
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         if (Input.GetKeyDown(KeyCode.G))
