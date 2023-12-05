@@ -193,10 +193,12 @@ partial struct DebugDrawingSystem : ISystem
             } else if (Input.GetKeyDown(KeyCode.Mouse1))
             {
                 float3 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
-                var (snappedPos, snappedToTile) = SnapToTileOrGrid(mousePos.xy);
-                foreach (var (walkState, selectState) in SystemAPI.Query<RefRW<WalkState>, EnabledRefRW<Selectable>>().WithAll<Selectable>())
+                var snappedPos = mousePos.xy * 2 + new float2(1, -1);
+                var navigationGridIndex = (int)snappedPos.x + (int)-snappedPos.y * NavigationSystem.navWidth;
+                state.EntityManager.SetComponentEnabled<PathGoal>(SystemAPI.QueryBuilder().WithDisabled<PathGoal>().WithAll<Selectable>().Build(), true);
+                foreach (var (walkState, selectState) in SystemAPI.Query<RefRW<PathGoal>, EnabledRefRW<Selectable>>().WithAll<Selectable>())
                 {
-                    walkState.ValueRW.target = snappedPos;
+                    walkState.ValueRW.nodeIndex = navigationGridIndex;
                     selectState.ValueRW = false;
                 }
             }
