@@ -175,7 +175,8 @@ public struct Pathfinder : IDisposable
                 GridNodeIndex n = end;
                 do
                 {
-                    outPath.Add(n);
+                    if (caveGrid[n]==NavigationSystem.NodeType.Ground)
+                        outPath.Add(n);
                     n = prevNodes[n];
                 } while (n != start);
                 return;
@@ -195,13 +196,14 @@ public struct Pathfinder : IDisposable
             GridNodeIndex neighborR = currentNodeIndex + 1;
             GridNodeIndex neighborU = currentNodeIndex - NavigationSystem.navWidth;
             GridNodeIndex neighborD = currentNodeIndex + NavigationSystem.navWidth;
-            if (x > 0 && caveGrid[neighborL] is NavigationSystem.NodeType.Ground or NavigationSystem.NodeType.JumpDown or NavigationSystem.NodeType.JumpUpDown)
+            if (x > 0 && !caveGrid[neighborL].IsObstructed())
                 ProcessNeighbor(currentNodeIndex, neighborL, currentLength + MOVE_COST_LEFTRIGHT);
-            if (x < NavigationSystem.navWidth-1 && caveGrid[neighborR] is NavigationSystem.NodeType.Ground or NavigationSystem.NodeType.JumpDown or NavigationSystem.NodeType.JumpUpDown)
+            if (x < NavigationSystem.navWidth-1 && !caveGrid[neighborR].IsObstructed())
                 ProcessNeighbor(currentNodeIndex, neighborR, currentLength + MOVE_COST_LEFTRIGHT);
-            if (y > 0 && caveGrid[neighborU] is NavigationSystem.NodeType.Ground or NavigationSystem.NodeType.JumpDown or NavigationSystem.NodeType.JumpUpDown)
-                ProcessNeighbor(currentNodeIndex, neighborU, currentLength + MOVE_COST_UP);
-            if (y < NavigationSystem.navWidth-1 && caveGrid[neighborD] is NavigationSystem.NodeType.Ground or NavigationSystem.NodeType.JumpDown or NavigationSystem.NodeType.JumpUpDown)
+            if (caveGrid[currentNodeIndex] is not NavigationSystem.NodeType.JumpDown)
+                if (y > 0 && !caveGrid[neighborU].IsObstructed())
+                    ProcessNeighbor(currentNodeIndex, neighborU, currentLength + MOVE_COST_UP);
+            if (y < NavigationSystem.navWidth-1 && !caveGrid[neighborD].IsObstructed())
                 ProcessNeighbor(currentNodeIndex, neighborD, currentLength + MOVE_COST_DOWN);
         }
         // If the candidates array empties without visiting the end node, it means the end node isn't reachable
@@ -255,6 +257,20 @@ static class NavigationExtensions
     }
 }
 
+static class NodeTypeExtensions
+{
+    public static bool IsGround(this NavigationSystem.NodeType nodeType)
+    {
+        return nodeType is NavigationSystem.NodeType.Ground or NavigationSystem.NodeType.GroundLedge or NavigationSystem.NodeType.GroundLanding;
+    }
+    
+    // is not walkable
+    public static bool IsObstructed(this NavigationSystem.NodeType nodeType)
+    {
+        return nodeType is NavigationSystem.NodeType.Air or NavigationSystem.NodeType.Obstructed;
+    }
+}
+
 public partial struct NavigationSystem : ISystem, ISystemStartStop
 {
     NativeList<NodeType> m_NavigationGrid;
@@ -263,6 +279,8 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
     {
         Air,
         Ground,
+        GroundLedge,
+        GroundLanding,
         Obstructed,
         JumpDown,
         JumpUpDown,
@@ -322,6 +340,7 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
         var caveSingleton = SystemAPI.GetSingleton<CaveGridSystem.Singleton>();
         var caveTileHeight = caveSingleton.GetCaveTileHeight();
         var corners = caveSingleton.CaveGrid.AsArray();
+        var tiles = caveSingleton.CaveTiles.AsArray();
         for (var tileY = 0; tileY > -caveTileHeight; tileY--)
         {
             for (var tileX = 0; tileX < CaveGridSystem.Singleton.CaveTilesWidth; tileX++)
@@ -339,20 +358,20 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
                 {
                     case 0: // 0000
                         m_NavigationGrid.SetNavigation(ref navIndexes,
-                            NodeType.Air, NodeType.Air, NodeType.Air,
-                            NodeType.Air, NodeType.Air, NodeType.Air,
-                            NodeType.Air, NodeType.Air, NodeType.Air);
+                                NodeType.Air, NodeType.Air, NodeType.Air,
+                                NodeType.Air, NodeType.Air, NodeType.Air,
+                                NodeType.Air, NodeType.Air, NodeType.Air);
                         break;
                     case 1: // 0001
                         m_NavigationGrid.SetNavigation(ref navIndexes,
                             NodeType.Air, NodeType.Air, NodeType.Air,
-                            NodeType.Ground, NodeType.Ground, NodeType.Air,
+                            NodeType.Ground, NodeType.GroundLedge, NodeType.Air,
                             NodeType.Obstructed, NodeType.Air, NodeType.Air);
                         break;
                     case 2: // 0010
                         m_NavigationGrid.SetNavigation(ref navIndexes,
                             NodeType.Air, NodeType.Air, NodeType.Air,
-                            NodeType.Air, NodeType.Ground, NodeType.Ground,
+                            NodeType.Air, NodeType.GroundLedge, NodeType.Ground,
                             NodeType.Air, NodeType.Air, NodeType.Obstructed);
                         break;
                     case 3: // 0011
@@ -436,18 +455,33 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
                 }
             }
         }
+        
+        for (var tileY = 0; tileY > -caveTileHeight; tileY--)
+        {
+            for (var tileX = 0; tileX < CaveGridSystem.Singleton.CaveTilesWidth; tileX++)
+            {
+                var navIndexes = NavigationExtensions.NavigationIndexes.FromTilePos(tileX, tileY);
+                var tileEntity = tiles[tileX + (-tileY * CaveGridSystem.Singleton.CaveTilesWidth)];
+                if (tileEntity != Entity.Null && !SystemAPI.HasComponent<ConstructionSite>(tileEntity))
+                    m_NavigationGrid.SetNavigation(ref navIndexes,
+                        NodeType.Air, NodeType.JumpDown, NodeType.Air,
+                        NodeType.JumpDown, NodeType.Ground, NodeType.JumpDown,
+                        NodeType.Air, NodeType.JumpDown, NodeType.Air);
+
+            }
+        }
 
         // Find green, and if blue up and down, set all blues to jump down until first non blue
         for (int navIndex = 0; navIndex < m_NavigationGrid.Length; navIndex++)
         {
-            if (m_NavigationGrid[navIndex] == NodeType.Ground)
+            if (m_NavigationGrid[navIndex] is NodeType.GroundLedge or NodeType.GroundLanding)
             {
                 var neighborU = navIndex - navWidth;
                 var current = navIndex;
                 var neighborD = navIndex + navWidth;
                 if (neighborU < 0 || neighborD >= m_NavigationGrid.Length) continue;
 
-                while (m_NavigationGrid[neighborU] is NodeType.Air or NodeType.JumpDown or NodeType.Ground
+                while (m_NavigationGrid[neighborU] is NodeType.Air or NodeType.JumpDown or NodeType.GroundLedge or NodeType.GroundLanding
                        && m_NavigationGrid[neighborD] is NodeType.Air or NodeType.JumpDown)
                 {
                     m_NavigationGrid[neighborD] = NodeType.JumpDown;
@@ -457,6 +491,8 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
                     neighborD += navWidth;
                     if (neighborD >= m_NavigationGrid.Length) break;
                 }
+                if (m_NavigationGrid[neighborD] is NodeType.Ground or NodeType.GroundLedge)
+                    m_NavigationGrid[neighborD] = NodeType.GroundLanding;
             }
         }
         
@@ -468,7 +504,7 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
                 var neighborU = navIndex - navWidth;
                 var neighborD = navIndex + navWidth;
                 if (neighborU < 0 || neighborD >= m_NavigationGrid.Length) continue;
-                if (m_NavigationGrid[neighborU] == NodeType.Ground && m_NavigationGrid[neighborD] == NodeType.Ground)
+                if (m_NavigationGrid[neighborU] is NodeType.Ground or NodeType.GroundLanding or NodeType.GroundLedge && m_NavigationGrid[neighborD] is NodeType.GroundLanding or NodeType.Ground)
                     m_NavigationGrid[navIndex] = NodeType.JumpUpDown;
             }
         }
@@ -488,6 +524,8 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
             colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex] switch
             {
                 NodeType.Ground => (Vector4)Color.green,
+                NodeType.GroundLedge => (Vector4)new Color(0.05f, 0.6f, 0.55f),
+                NodeType.GroundLanding => (Vector4)new Color(0.05f, 0.6f, 0.05f),
                 NodeType.Air => (Vector4)new Color(0.27f, 0.23f, 0.36f) ,
                 NodeType.Obstructed => (Vector4)new Color(0.39f, 0.24f, 0.19f),
                 NodeType.JumpDown => (Vector4)Color.yellow,
@@ -584,7 +622,12 @@ partial struct PathMoveJob : IJobEntity
             // still moving to the current destination node
             var fromNodePos = new float3((fromNodeIndex % NavigationSystem.navWidth)-1, (-fromNodeIndex / NavigationSystem.navWidth)+1, -10) * 0.5f;
             // TODO: something fancier than a simple lerp here
-            transform.Position = math.lerp(fromNodePos, toNodePos, moveState.ValueRO.T);
+            var a = -7f;
+            var b = (toNodePos.y-fromNodePos.y - a * (toNodePos.x*toNodePos.x-fromNodePos.x*fromNodePos.x))/(toNodePos.x-fromNodePos.x);
+            var c = fromNodePos.y - a * fromNodePos.x * fromNodePos.x - b * fromNodePos.x;
+            var myT = moveState.ValueRO.T * moveState.ValueRO.T * (3.0f - 2.0f * moveState.ValueRO.T);
+            var currentX = math.lerp(fromNodePos.x, toNodePos.x, myT);
+            transform.Position = new float3(currentX, currentX*currentX*a + currentX*b + c, transform.Position.z);
         }
         else
         {
