@@ -203,11 +203,31 @@ public struct Pathfinder : IDisposable
             // right
             if (x < NavigationSystem.navWidth - 1 && !caveGrid[neighborR].IsObstructed())
                 ProcessNeighbor(currentNodeIndex, neighborR, currentLength + MOVE_COST_LEFTRIGHT);
-            // up
-            if (caveGrid[currentNodeIndex] is not NavigationSystem.NodeType.JumpDown)
-                if (y > 0 && !caveGrid[neighborU].IsObstructed()) 
-                    ProcessNeighbor(currentNodeIndex, neighborU, currentLength + MOVE_COST_UP);
-                
+            
+            if (caveGrid[currentNodeIndex] is NavigationSystem.NodeType.GroundLandingL or NavigationSystem.NodeType.GroundLandingLR)
+            {
+                // loop down until hit mid landing
+                var jumpTo = neighborR;
+                while (caveGrid[jumpTo] is not NavigationSystem.NodeType.GroundLedgeL and not NavigationSystem.NodeType.JumpDown)
+                    jumpTo -= NavigationSystem.navWidth;
+                ProcessNeighbor(currentNodeIndex, jumpTo, currentLength + MOVE_COST_UP);
+            }
+            else if (caveGrid[currentNodeIndex] is NavigationSystem.NodeType.GroundLandingR or NavigationSystem.NodeType.GroundLandingLR)
+            {
+                // loop down until hit mid landing
+                var jumpTo = neighborL;
+                while (caveGrid[jumpTo] is not NavigationSystem.NodeType.GroundLedgeR and not NavigationSystem.NodeType.JumpDown)
+                    jumpTo -= NavigationSystem.navWidth;
+                ProcessNeighbor(currentNodeIndex, jumpTo, currentLength + MOVE_COST_UP);
+            }
+            else
+            {
+                // up
+                if (caveGrid[currentNodeIndex] is not NavigationSystem.NodeType.JumpDown)
+                    if (y > 0 && !caveGrid[neighborU].IsObstructed()) 
+                        ProcessNeighbor(currentNodeIndex, neighborU, currentLength + MOVE_COST_UP);
+            }
+            
             var jumpModeIsLeft = caveGrid[currentNodeIndex] is NavigationSystem.NodeType.GroundLedgeL;
             if (jumpModeIsLeft || caveGrid[currentNodeIndex] is NavigationSystem.NodeType.GroundLedgeR)
             {
@@ -215,10 +235,7 @@ public struct Pathfinder : IDisposable
                 var jumpTo = neighborD;
                 while (caveGrid[jumpTo] is not NavigationSystem.NodeType.GroundLandingMid) 
                     jumpTo += NavigationSystem.navWidth;
-                if (jumpModeIsLeft)
-                    jumpTo -= 1;
-                else
-                    jumpTo += 1;
+                jumpTo += jumpModeIsLeft ? -1 : 1;
                 ProcessNeighbor(currentNodeIndex, jumpTo, currentLength + MOVE_COST_DOWN);
             }
             else 
@@ -332,7 +349,6 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
     {
         m_Pathfinder.Dispose();
     }
-
     
     public void OnStartRunning(ref SystemState state)
     {
@@ -680,15 +696,17 @@ partial struct PathMoveJob : IJobEntity
         GridNodeIndex toNodeIndex = moveState.ValueRO.To;
         
         var toNodePos = new float3((toNodeIndex % NavigationSystem.navWidth)-1, (-toNodeIndex / NavigationSystem.navWidth)+1, -10) * 0.5f;
+        var fromNodePos = new float3((fromNodeIndex % NavigationSystem.navWidth)-1, (-fromNodeIndex / NavigationSystem.navWidth)+1, -10) * 0.5f;
+        var fromNodeJumpedPos = new float3(math.lerp(fromNodePos.x,toNodePos.x,0.25f), math.max(fromNodePos.y,toNodePos.y)+.7f, fromNodePos.z);
+        var distanceBetweenNodes = math.distance(toNodePos, fromNodeJumpedPos);
+        distanceBetweenNodes += math.distance(fromNodeJumpedPos, fromNodePos);
+        distanceBetweenNodes *= 0.5f;
         moveState.ValueRW.T += DeltaTime;
-        if (Hint.Likely(moveState.ValueRO.T < 1.0f))
+        if (Hint.Likely(moveState.ValueRO.T < distanceBetweenNodes))
         {
-            // still moving to the current destination node
-            var fromNodePos = new float3((fromNodeIndex % NavigationSystem.navWidth)-1, (-fromNodeIndex / NavigationSystem.navWidth)+1, -10) * 0.5f;
-            // TODO: something fancier than a simple lerp here
-            var fromNodeJumpedPos = new float3((fromNodePos.x+toNodePos.x)/2f, math.max(fromNodePos.y, toNodePos.y)+0.4f, fromNodePos.z);
-            var myT = moveState.ValueRO.T * moveState.ValueRO.T * (3.0f - 2.0f * moveState.ValueRO.T);
-            transform.Position = QuadraticBezier(fromNodePos, fromNodeJumpedPos, toNodePos, myT);
+            var t = moveState.ValueRO.T / distanceBetweenNodes;
+            t = t * t * (3.0f - 2.0f * t); // smoothstep
+            transform.Position = QuadraticBezier(fromNodePos, fromNodeJumpedPos, toNodePos, t);
         }
         else
         {
@@ -710,7 +728,7 @@ partial struct PathMoveJob : IJobEntity
                 moveState.ValueRW = new PathMoveState {
                     From = toNodeIndex,
                     To = nextToNode,
-                    T = moveState.ValueRO.T % 1.0f, // forward any leftover T into the new move
+                    T = moveState.ValueRO.T - distanceBetweenNodes, // forward any leftover T into the new move
                 };
             }
         }
