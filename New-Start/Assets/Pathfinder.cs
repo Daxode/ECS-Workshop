@@ -515,6 +515,16 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
 
             }
         }
+        
+        // Find ledges and set jump from ledge to ground
+        // for (int navIndex = 0; navIndex < m_NavigationGrid.Length; navIndex++)
+        // {
+        //     if (m_NavigationGrid[navIndex] is NodeType.GroundLedgeR && navIndex+2 < m_NavigationGrid.Length) 
+        //         m_NavigationGrid[navIndex+2] = NodeType.JumpDown;
+        //     if (m_NavigationGrid[navIndex] is NodeType.GroundLedgeL && navIndex-2 > 0) 
+        //         m_NavigationGrid[navIndex-2] = NodeType.JumpDown;
+        // }
+        
 
         // Find green, and if blue up and down, set all blues to jump down until first non blue
         for (int navIndex = 0; navIndex < m_NavigationGrid.Length; navIndex++)
@@ -526,11 +536,18 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
                 var current = navIndex;
                 var neighborD = navIndex + navWidth;
                 if (neighborU < 0 || neighborD >= m_NavigationGrid.Length) continue;
+                m_NavigationGrid[current+(isLeft?-1:1)] = NodeType.JumpDown;
+                m_NavigationGrid[current+(isLeft?-2:2)] = NodeType.JumpDown;
 
+                var longJumpInvalid = false;
                 while (m_NavigationGrid[neighborU] is NodeType.Air or NodeType.JumpDown or NodeType.GroundLedgeL or NodeType.GroundLedgeR or NodeType.GroundLandingL or NodeType.GroundLandingR
                        && m_NavigationGrid[neighborD] is NodeType.Air or NodeType.JumpDown)
                 {
                     m_NavigationGrid[neighborD] = NodeType.JumpDown;
+                    var longJumpIndex = neighborD + (isLeft ? -2:2);
+                    if (m_NavigationGrid[longJumpIndex] == NodeType.Air && !longJumpInvalid)
+                        m_NavigationGrid[longJumpIndex] = NodeType.JumpDown;
+                    else longJumpInvalid = true;
                     
                     neighborU = current;
                     current = neighborD;
