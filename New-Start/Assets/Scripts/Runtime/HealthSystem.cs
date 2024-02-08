@@ -1,7 +1,13 @@
-﻿using System;
-using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
+
+[InternalBufferCapacity(4)]
+public struct SpriteFrameElement : IBufferElementData
+{
+    public float2 offset;
+}
 
 struct HealthData : IComponentData
 {
@@ -43,6 +49,9 @@ partial struct PreHealthSystem : ISystem
         }
     }
 }
+
+
+
 
 partial struct HealthSystem : ISystem
 {

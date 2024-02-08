@@ -1,5 +1,4 @@
-﻿using System;
-using Unity.Entities;
+﻿using Unity.Entities;
 using UnityEngine;
 
 public class GridSnappedAuthor : MonoBehaviour
@@ -9,7 +8,7 @@ public class GridSnappedAuthor : MonoBehaviour
         public override void Bake(GridSnappedAuthor authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Renderable);
-            AddComponent(entity, new GridSnappedTag());
+            AddComponent<GridSnappedTag>(entity);
         }
     }
 }

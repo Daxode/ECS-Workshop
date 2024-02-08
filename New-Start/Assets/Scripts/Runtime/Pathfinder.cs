@@ -8,23 +8,6 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-/// <summary>
-/// Wrapper to distinguish an integer node index in the grid from a raw integer.
-/// </summary>
-public struct GridNodeIndex : IComparable<GridNodeIndex>
-{
-    public int Index;
-    public static implicit operator int(GridNodeIndex n) => n.Index;
-    public static implicit operator GridNodeIndex(int i) => new GridNodeIndex { Index = i };
-    public int CompareTo(GridNodeIndex other)
-    {
-        return Index.CompareTo(other.Index);
-    }
-}
-
-/// <summary>
-/// 
-/// </summary>
 public struct PathGoal : IComponentData, IEnableableComponent
 {
     public GridNodeIndex nodeIndex;
@@ -56,14 +39,14 @@ public struct Pathfinder : IDisposable
         Seen = 1,
         Visited = 2,
     }
-    private NativeArray<NodeState> nodeStates;
-    private NativeArray<int> pathCosts; // The total cost of the shortest path to each node from the start that we've found so far. undefined for unvisited nodes
-    private NativeArray<int> pathNodeCounts; // The number of nodes in the path from start to each node (including start and this node). undefined for unvisited nodes
-    private NativeArray<GridNodeIndex> prevNodes; // Index of the previous node in the shortest path from the start to each node. undefined for unvisited nodes
-    private NativeList<GridNodeIndex> candidateNodes;
-    private const int MOVE_COST_LEFTRIGHT = 2;
-    private const int MOVE_COST_UP = 3;
-    private const int MOVE_COST_DOWN = 1;
+    NativeArray<NodeState> nodeStates;
+    NativeArray<int> pathCosts; // The total cost of the shortest path to each node from the start that we've found so far. undefined for unvisited nodes
+    NativeArray<int> pathNodeCounts; // The number of nodes in the path from start to each node (including start and this node). undefined for unvisited nodes
+    NativeArray<GridNodeIndex> prevNodes; // Index of the previous node in the shortest path from the start to each node. undefined for unvisited nodes
+    NativeList<GridNodeIndex> candidateNodes;
+    const int MOVE_COST_LEFTRIGHT = 2;
+    const int MOVE_COST_UP = 3;
+    const int MOVE_COST_DOWN = 1;
 
     public Pathfinder(int nodeCount, Allocator allocator)
     {
@@ -313,6 +296,7 @@ static class NodeTypeExtensions
         or NavigationSystem.NodeType.Obstructed;
 }
 
+[UpdateAfter(typeof(CaveGridSystem))]
 public partial struct NavigationSystem : ISystem, ISystemStartStop
 {
     NativeList<NodeType> m_NavigationGrid;
@@ -379,9 +363,87 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        // If the cave grid has changed, update the navigation grid
+        if (true) 
+            UpdateNavigationGrid(ref state);
+        
+        // Toggle debug grid
         if (Input.GetKeyDown(KeyCode.G))
             showDebugGrid = !showDebugGrid;
+
+        // Draw debug grid with colors
+        foreach (var (lt, colorRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideCornerStrength>>().WithAll<NavigationGridLockTag>())
+        {
+            if (!showDebugGrid)
+            {
+                colorRef.ValueRW.Value = (Vector4)Color.clear;
+                continue;
+            }
+            
+            var gridPos = lt.Position.xy * 2 + new float2(1, -1);
+            var navigationGridIndex = (int)gridPos.x + (int)-gridPos.y * navWidth;
+            if (Input.GetKey(KeyCode.W))
+                colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex].IsGround()
+                    ? (Vector4)Color.green
+                    : (Vector4)Color.red;
+            else if (Input.GetKey(KeyCode.E))
+                colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex].IsObstructed()
+                    ? (Vector4)Color.red
+                    : (Vector4)Color.green;
+            else if (Input.GetKey(KeyCode.D))
+                colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex]
+                    is NodeType.GroundLandingL or NodeType.GroundLedgeL
+                    ? (Vector4)Color.green
+                    : m_NavigationGrid[navigationGridIndex] is NodeType.GroundLandingR or NodeType.GroundLedgeR
+                        ? (Vector4)Color.blue
+                        : m_NavigationGrid[navigationGridIndex] is NodeType.GroundLandingMid
+                            ? (Vector4)Color.yellow
+                            : m_NavigationGrid[navigationGridIndex] is NodeType.GroundLandingLR
+                                ? (Vector4)Color.magenta
+                                : (Vector4)Color.red;
+            else
+                colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex] switch
+                {
+                    NodeType.Ground => (Vector4)Color.green,
+                    NodeType.GroundLedgeL => (Vector4)new Color(0.05f, 0.6f, 0.55f),
+                    NodeType.GroundLedgeR => (Vector4)new Color(0.45f, 0.6f, 0.55f),
+                    NodeType.GroundLandingL => (Vector4)new Color(0.05f, 0.6f, 0.05f),
+                    NodeType.GroundLandingR => (Vector4)new Color(0.45f, 0.6f, 0.05f),
+                    NodeType.Air => (Vector4)new Color(0.27f, 0.23f, 0.36f) ,
+                    NodeType.Obstructed => (Vector4)new Color(0.39f, 0.24f, 0.19f),
+                    NodeType.JumpDown => (Vector4)Color.yellow,
+                    NodeType.JumpUpDown => (Vector4)Color.cyan,
+                    _ => (Vector4)Color.clear
+                };
+        }
         
+        // Find paths from goals to start (based on the navigationGrid)
+        new FindPathsJob
+        {
+            Finder = m_Pathfinder,
+            NavGrid = m_NavigationGrid.AsArray(),
+            PathNodeLookup = SystemAPI.GetBufferLookup<PathNode>(),
+            PathMoveStateLookup = SystemAPI.GetComponentLookup<PathMoveState>(),
+        }.Run(SystemAPI.QueryBuilder()
+            .WithAll<LocalTransform, PathGoal>()
+            .WithDisabledRW<PathNode,PathMoveState>()
+            .Build());
+
+        // Move slimes that have a path
+        new PathMoveJob
+        {
+            PathNodeLookup = SystemAPI.GetBufferLookup<PathNode>(),
+            PathMoveStateLookup = SystemAPI.GetComponentLookup<PathMoveState>(),
+            PathGoalLookup = SystemAPI.GetComponentLookup<PathGoal>(),
+            DeltaTime = SystemAPI.Time.DeltaTime,
+        }.Run(SystemAPI.QueryBuilder()
+            .WithAllRW<PathNode,PathMoveState>()
+            .WithAllRW<LocalTransform>()
+            .Build());
+    }
+
+    void UpdateNavigationGrid(ref SystemState state)
+    {
         var caveSingleton = SystemAPI.GetSingleton<CaveGridSystem.Singleton>();
         var caveTileHeight = caveSingleton.GetCaveTileHeight();
         var corners = caveSingleton.CaveGrid.AsArray();
@@ -403,9 +465,9 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
                 {
                     case 0: // 0000
                         m_NavigationGrid.SetNavigation(ref navIndexes,
-                                NodeType.Air, NodeType.Air, NodeType.Air,
-                                NodeType.Air, NodeType.Air, NodeType.Air,
-                                NodeType.Air, NodeType.Air, NodeType.Air);
+                            NodeType.Air, NodeType.Air, NodeType.Air,
+                            NodeType.Air, NodeType.Air, NodeType.Air,
+                            NodeType.Air, NodeType.Air, NodeType.Air);
                         break;
                     case 1: // 0001
                         m_NavigationGrid.SetNavigation(ref navIndexes,
@@ -515,16 +577,6 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
 
             }
         }
-        
-        // Find ledges and set jump from ledge to ground
-        // for (int navIndex = 0; navIndex < m_NavigationGrid.Length; navIndex++)
-        // {
-        //     if (m_NavigationGrid[navIndex] is NodeType.GroundLedgeR && navIndex+2 < m_NavigationGrid.Length) 
-        //         m_NavigationGrid[navIndex+2] = NodeType.JumpDown;
-        //     if (m_NavigationGrid[navIndex] is NodeType.GroundLedgeL && navIndex-2 > 0) 
-        //         m_NavigationGrid[navIndex-2] = NodeType.JumpDown;
-        // }
-        
 
         // Find green, and if blue up and down, set all blues to jump down until first non blue
         for (int navIndex = 0; navIndex < m_NavigationGrid.Length; navIndex++)
@@ -588,77 +640,8 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
                     m_NavigationGrid[navIndex] = NodeType.JumpUpDown;
             }
         }
-        
-        // change color based on grid
-        foreach (var (lt, colorRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideCornerStrength>>().WithAll<NavigationGridLockTag>())
-        {
-            if (!showDebugGrid)
-            {
-                colorRef.ValueRW.Value = (Vector4)Color.clear;
-                continue;
-            }
-            
-            var gridPos = lt.Position.xy * 2 + new float2(1, -1);
-            var navigationGridIndex = (int)gridPos.x + (int)-gridPos.y * navWidth;
-            if (Input.GetKey(KeyCode.W))
-                colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex].IsGround()
-                    ? (Vector4)Color.green
-                    : (Vector4)Color.red;
-            else if (Input.GetKey(KeyCode.E))
-                colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex].IsObstructed()
-                    ? (Vector4)Color.red
-                    : (Vector4)Color.green;
-            else if (Input.GetKey(KeyCode.D))
-                colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex]
-                    is NodeType.GroundLandingL or NodeType.GroundLedgeL
-                    ? (Vector4)Color.green
-                    : m_NavigationGrid[navigationGridIndex] is NodeType.GroundLandingR or NodeType.GroundLedgeR
-                        ? (Vector4)Color.blue
-                        : m_NavigationGrid[navigationGridIndex] is NodeType.GroundLandingMid
-                            ? (Vector4)Color.yellow
-                            : m_NavigationGrid[navigationGridIndex] is NodeType.GroundLandingLR
-                                ? (Vector4)Color.magenta
-                                : (Vector4)Color.red;
-            else
-                colorRef.ValueRW.Value = m_NavigationGrid[navigationGridIndex] switch
-                {
-                    NodeType.Ground => (Vector4)Color.green,
-                    NodeType.GroundLedgeL => (Vector4)new Color(0.05f, 0.6f, 0.55f),
-                    NodeType.GroundLedgeR => (Vector4)new Color(0.45f, 0.6f, 0.55f),
-                    NodeType.GroundLandingL => (Vector4)new Color(0.05f, 0.6f, 0.05f),
-                    NodeType.GroundLandingR => (Vector4)new Color(0.45f, 0.6f, 0.05f),
-                    NodeType.Air => (Vector4)new Color(0.27f, 0.23f, 0.36f) ,
-                    NodeType.Obstructed => (Vector4)new Color(0.39f, 0.24f, 0.19f),
-                    NodeType.JumpDown => (Vector4)Color.yellow,
-                    NodeType.JumpUpDown => (Vector4)Color.cyan,
-                    _ => (Vector4)Color.clear
-                };
-        }
-        
-        new FindPathsJob
-        {
-            Finder = m_Pathfinder,
-            NavGrid = m_NavigationGrid.AsArray(),
-            PathNodeLookup = SystemAPI.GetBufferLookup<PathNode>(),
-            PathMoveStateLookup = SystemAPI.GetComponentLookup<PathMoveState>(),
-        }.Run(SystemAPI.QueryBuilder()
-            .WithAll<LocalTransform, PathGoal>()
-            .WithDisabledRW<PathNode,PathMoveState>()
-            .Build());
-
-        // Move slimes that have a path
-        new PathMoveJob
-        {
-            PathNodeLookup = SystemAPI.GetBufferLookup<PathNode>(),
-            PathMoveStateLookup = SystemAPI.GetComponentLookup<PathMoveState>(),
-            PathGoalLookup = SystemAPI.GetComponentLookup<PathGoal>(),
-            DeltaTime = SystemAPI.Time.DeltaTime,
-        }.Run(SystemAPI.QueryBuilder()
-            .WithAllRW<PathNode,PathMoveState>()
-            .WithAllRW<LocalTransform>()
-            .Build());
     }
-    
+
     public void OnStopRunning(ref SystemState state) {}
 }
 

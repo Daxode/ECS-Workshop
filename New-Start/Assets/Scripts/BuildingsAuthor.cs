@@ -19,8 +19,3 @@ public class BuildingsAuthor : MonoBehaviour
         }
     }
 }
-
-struct ConstructionSiteElement : IBufferElementData
-{
-    public Entity constructionSite;
-}

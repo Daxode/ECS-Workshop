@@ -2,7 +2,7 @@
 
 class DestroyGOonAwake : MonoBehaviour
 {
-    private void Awake()
+    void Awake()
     {
         Destroy(gameObject);
     }

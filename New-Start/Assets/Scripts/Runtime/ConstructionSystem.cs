@@ -1,7 +1,14 @@
 ﻿
 using Unity.Entities;
 using Unity.Transforms;
-using UnityEngine;
+
+struct ConstructionSite : IComponentData
+{
+    public Entity builtPrefab;
+    public int neededResources;
+    public int currentResources;
+    public Entity textEntity;
+}
 
 public partial struct ConstructionSystem : ISystem
 {

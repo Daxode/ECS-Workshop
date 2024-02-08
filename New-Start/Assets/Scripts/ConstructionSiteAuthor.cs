@@ -1,5 +1,4 @@
-﻿using System;
-using Unity.Entities;
+﻿using Unity.Entities;
 using UnityEngine;
 
 public class ConstructionSiteAuthor : MonoBehaviour
@@ -22,12 +21,4 @@ public class ConstructionSiteAuthor : MonoBehaviour
             });
         }
     }
-}
-
-struct ConstructionSite : IComponentData
-{
-    public Entity builtPrefab;
-    public int neededResources;
-    public int currentResources;
-    public Entity textEntity;
 }

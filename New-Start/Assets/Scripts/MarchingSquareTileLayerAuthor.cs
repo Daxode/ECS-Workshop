@@ -1,11 +1,10 @@
-using System;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Rendering;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshRenderer))]
-public class MarchingSquareTileLayer : MonoBehaviour
+public class MarchingSquareTileLayerAuthor : MonoBehaviour
 {
     public MarchingSquareTagType tagType;
     public enum MarchingSquareTagType
@@ -16,26 +15,26 @@ public class MarchingSquareTileLayer : MonoBehaviour
     }
 }
 
-class MarchingSquareTileLayerBaker : Baker<MarchingSquareTileLayer>
+class MarchingSquareTileLayerBaker : Baker<MarchingSquareTileLayerAuthor>
 {
-    public override void Bake(MarchingSquareTileLayer authoring)
+    public override void Bake(MarchingSquareTileLayerAuthor authoring)
     {
         var entity = GetEntity(TransformUsageFlags.Renderable);
         AddComponent(entity, new MaterialOverrideCornerStrength{ Value = 1 });;
         AddComponent(entity, new MaterialOverrideOffsetXYScaleZW { Value = new float4(
             0, // offset
-            DependsOn(GetComponentInParent<MarchingSquareTile>().spriteTextureSheet).texelSize * 32 // scale
+            DependsOn(GetComponentInParent<MarchingSquareTileAuthor>().spriteTextureSheet).texelSize * 32 // scale
         )});
 
         switch (authoring.tagType)
         {
-            case MarchingSquareTileLayer.MarchingSquareTagType.Carver:
+            case MarchingSquareTileLayerAuthor.MarchingSquareTagType.Carver:
                 AddComponent(entity, new MarchingSquareTileCarverTag());
                 break;
-            case MarchingSquareTileLayer.MarchingSquareTagType.MatA:
+            case MarchingSquareTileLayerAuthor.MarchingSquareTagType.MatA:
                 AddComponent(entity, new MarchingSquareTileMatATag());
                 break;
-            case MarchingSquareTileLayer.MarchingSquareTagType.MatB:
+            case MarchingSquareTileLayerAuthor.MarchingSquareTagType.MatB:
                 AddComponent(entity, new MarchingSquareTileMatBTag());
                 break;
         }
@@ -54,7 +53,3 @@ public struct MaterialOverrideOffsetXYScaleZW : IComponentData
 {
     public float4 Value;
 }
-
-struct MarchingSquareTileCarverTag : IComponentData {}
-struct MarchingSquareTileMatATag : IComponentData {}
-struct MarchingSquareTileMatBTag : IComponentData {}

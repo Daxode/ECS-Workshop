@@ -1,13 +1,6 @@
-using System;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
-
-[InternalBufferCapacity(4)]
-public struct SpriteFrameElement : IBufferElementData
-{
-    public float2 offset;
-}
 
 [RequireComponent(typeof(MeshRenderer))]
 public class AnimatedSpriteAuthor : MonoBehaviour

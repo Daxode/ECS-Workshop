@@ -1,19 +1,8 @@
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-public class CursorAuthor : MonoBehaviour
-{
-    class CursorAuthorBaker : Baker<CursorAuthor>
-    {
-        public override void Bake(CursorAuthor authoring)
-        {
-            var entity = GetEntity(TransformUsageFlags.Renderable);
-            AddComponent(entity, new CursorSelection{cursorToDraw = CursorSelection.CursorToDraw.SelectDefault});
-        }
-    }
-}
 
 public struct CursorSelection : IComponentData
 {
@@ -64,6 +53,11 @@ public static class CursorToDrawExtensions
 struct GridSnappedTag : IComponentData {}
 struct TileSnappedTag : IComponentData {}
 
+
+struct Selectable : IComponentData, IEnableableComponent
+{
+    public Entity outlineEntity;
+}
 
 partial struct CursorSystem : ISystem
 {
@@ -187,9 +181,4 @@ partial struct CursorSystem : ISystem
         
         SystemAPI.GetComponentRW<MaterialOverrideOffsetXYScaleZW>(cursorEntity).ValueRW.Value.xy = cursorSpriteOffsets[(int)cursorSelection.cursorToDraw].offset;
     }
-}
-
-struct Selectable : IComponentData, IEnableableComponent
-{
-    public Entity outlineEntity;
 }

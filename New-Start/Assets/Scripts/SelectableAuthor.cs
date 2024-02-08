@@ -1,11 +1,4 @@
-using System;
-using System.Runtime.CompilerServices;
-using Unity.Burst;
-using Unity.Burst.CompilerServices;
-using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
-using Unity.Transforms;
 using UnityEngine;
 
 public class SelectableAuthor : MonoBehaviour
@@ -22,19 +15,6 @@ public class SelectableAuthor : MonoBehaviour
                 outlineEntity = authoring.drawnOutline ? GetEntity(authoring.drawnOutline, TransformUsageFlags.Dynamic) : Entity.Null
             });
             SetComponentEnabled<Selectable>(entity, false);
-        }
-    }
-}
-
-partial struct SelectableSystem : ISystem
-{
-    public void OnUpdate(ref SystemState state)
-    {
-        foreach (var (data, selectState) in SystemAPI
-                     .Query<Selectable, EnabledRefRO<Selectable>>()
-                     .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
-        {
-            SystemAPI.SetComponent(data.outlineEntity, selectState.ValueRO ? LocalTransform.Identity : default);
         }
     }
 }
