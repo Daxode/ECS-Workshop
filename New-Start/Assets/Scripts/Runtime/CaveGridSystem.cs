@@ -1,5 +1,6 @@
 ﻿// #define DEBUG_DRAW_CAVE_GRID
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -7,6 +8,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
+using Debug = UnityEngine.Debug;
 
 struct MarchingSquareTileCarverTag : IComponentData {}
 struct MarchingSquareTileMatATag : IComponentData {}
@@ -52,63 +54,201 @@ public enum CaveMaterialType : byte
     Water,
 }
 
-static class CaveSystemExtensions
+struct GridList : IDisposable
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int4 GetCornerValues(this NativeArray<CaveMaterialType> caveGrid, int2 coord)
-    {
-        // assert that y is negative or ground level. As we're going from top to bottom, y should be negative
-        if (coord.y > 0) throw new Exception("y must be negative");
+    NativeList<CaveMaterialType> m_Grid;
+    public static implicit operator GridList(NativeList<CaveMaterialType> val) => new() { m_Grid = val };
+    public const int Width = 20;
+    public int GetHeight() => m_Grid.Length / Width;
+    public void Dispose() => m_Grid.Dispose();
+    public GridArray AsArray() => m_Grid.AsArray();
+    public NativeList<CaveMaterialType> GetRawUnsafe() => m_Grid;
+    public int Length => m_Grid.Length;
+}
 
-        // get the 4 corners
-        var i = coord.x + -coord.y * CaveGridSystem.Singleton.CaveGridWidth;
-        return new int4(
-            (int)caveGrid[i + CaveGridSystem.Singleton.CaveGridWidth], // Bottom Left
-            (int)caveGrid[i + CaveGridSystem.Singleton.CaveGridWidth + 1], // Bottom Right
-            (int)caveGrid[i + 1], // Top Right
-            (int)caveGrid[i] // Top Left
-        );
+public struct GridArray
+{
+    NativeArray<CaveMaterialType> m_Grid;
+    public static implicit operator GridArray(NativeArray<CaveMaterialType> val) => new() { m_Grid = val };
+    public const int Width = 20;
+    public int GetHeight() => m_Grid.Length / Width;
+    public NativeArray<CaveMaterialType> GetRawUnsafe() => m_Grid;
+    public int Length => m_Grid.Length;
+    public CaveMaterialType this[IndexFor<GridArray> i]
+    {
+        get => m_Grid[i];
+        set => m_Grid[i] = value;
     }
 }
 
+struct TileList : IDisposable
+{
+    NativeList<Entity> m_Tiles;
+    public static implicit operator TileList(NativeList<Entity> val) => new() { m_Tiles = val };
+    public const int Width = GridList.Width-1;
+    public int GetCaveTileHeight() => m_Tiles.Length / Width;
+    public void Dispose() => m_Tiles.Dispose();
+    public TileArray AsArray() => m_Tiles.AsArray();
+    public NativeList<Entity> GetRawUnsafe() => m_Tiles;
+    public int Length => m_Tiles.Length;
+}
+
+public struct TileArray
+{
+    NativeArray<Entity> m_Tiles;
+    public static implicit operator TileArray(NativeArray<Entity> val) => new() { m_Tiles = val };
+    public const int Width = GridList.Width-1;
+    public int GetCaveTileHeight() => m_Tiles.Length / Width;
+    public NativeArray<Entity> GetRawUnsafe() => m_Tiles;
+    public int Length => m_Tiles.Length;
+    
+    public Entity this[IndexFor<TileArray> i]
+    {
+        get => m_Tiles[i];
+        set => m_Tiles[i] = value;
+    }
+}
+
+public static class CoordUtility
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IndexFor<TileArray> WorldPosToTileIndex(float2 worldPos) 
+        => new Int2For<TileArray>((int2)math.round(worldPos)).GetIndex();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Int2For<GridArray> WorldPosToGridPos(float2 worldPos) 
+        => new((int2)math.round(worldPos + new float2(0.5f, -0.5f)));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Int2For<GridArray> LocalToWorldToGridPos(LocalToWorld ltw) 
+        => new((int2)ltw.Position.xy);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float2 SnapWorldPosToGridPos(float2 worldPos) =>
+        (Float2For<GridArray>)WorldPosToGridPos(worldPos) - new float2(0.5f, -0.5f);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IndexFor<GridArray> WorldPosToGridIndex(float2 worldPos) => WorldPosToGridPos(worldPos).GetIndex();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static (float2 pos, bool snappedToTile) SnapToTileOrGrid(float2 worldPos)
+    {
+        var gridPos = SnapWorldPosToGridPos(worldPos);
+        var tilePos = math.round(worldPos);
+        var snappedToTile = math.distancesq(worldPos, tilePos) < math.distancesq(worldPos, gridPos);
+        return (math.select(gridPos, tilePos, snappedToTile), snappedToTile);
+    }
+
+
+    
+    // GridArray Helpers
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IndexFor<GridArray> GetIndex(this Int2For<GridArray> gridPos)
+    {
+        AssertBounds(gridPos);
+        return new IndexFor<GridArray>(gridPos.X + (-gridPos.Y * GridArray.Width));
+    }
+    [BurstDiscard]
+    [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static void AssertBounds(Int2For<GridArray> gridPos) 
+        => Debug.Assert(gridPos.X is >= 0 and < GridArray.Width && gridPos.Y <= 0,
+            $"Grid position {(int2)gridPos} out of bounds (remember that Y has to be negative)");
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IndexFor<GridArray> GoRight(this IndexFor<GridArray> gridIndex)
+        => new (gridIndex + 1);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IndexFor<GridArray> GoDown(this IndexFor<GridArray> gridIndex)
+        => new (gridIndex + GridArray.Width);
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int4 GetCornerValues(this GridArray caveGrid, Int2For<GridArray> coord)
+    {
+        var i = coord.GetIndex();
+        return new int4(
+            (int)caveGrid[i.GoDown()], // Bottom Left
+            (int)caveGrid[i.GoDown().GoRight()], // Bottom Right
+            (int)caveGrid[i.GoRight()], // Top Right
+            (int)caveGrid[i] // Top Left
+        );
+    }
+    
+    
+    // TileArray Helpers
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IndexFor<TileArray> GetIndex(this Int2For<TileArray> tilePos)
+    {
+        AssertBounds(tilePos);
+        return new IndexFor<TileArray>(tilePos.X + (-tilePos.Y * TileArray.Width));
+    }
+    [BurstDiscard]
+    [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static void AssertBounds(Int2For<TileArray> tilePos) 
+        => Debug.Assert(tilePos.X is >= 0 and < TileArray.Width && tilePos.Y <= 0, 
+            $"Tile position {(int2)tilePos} out of bounds (remember that Y has to be negative)");
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IndexFor<GridArray> GoRight(this IndexFor<TileArray> tilePos)
+        => new (tilePos + 1);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IndexFor<GridArray> GoDown(this IndexFor<TileArray> tilePos)
+        => new (tilePos + TileArray.Width);
+    
+}
 
 [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
 [UpdateAfter(typeof(TransformSystemGroup))]
 public partial struct CaveGridSystem : ISystem, ISystemStartStop
 {
-    public struct Singleton : IComponentData
+    public struct Singleton : IComponentData, IDisposable
     {
-        public NativeList<CaveMaterialType> CaveGrid;
-        public const int CaveGridWidth = 20;
-        public int GetCaveGridHeight() => CaveGrid.Length / CaveGridWidth;
+        GridList m_CaveGrid;
+        TileList m_CaveTiles;
         
-        public NativeList<Entity> CaveTiles;
-        public const int CaveTilesWidth = CaveGridWidth-1;
-        public int GetCaveTileHeight() => CaveTiles.Length / CaveTilesWidth;
+        public const int DefaultInitRowCount = 128;
         
-        public static int WorldPosToTileIndex(float2 worldPos)
+        public Singleton(Allocator allocator)
         {
-            var tilePos = (int2)math.round(worldPos);
-            return tilePos.x + -tilePos.y * CaveTilesWidth;
+            var caveGrid = new NativeList<CaveMaterialType>(GridList.Width * DefaultInitRowCount, allocator);
+            var caveTiles = new NativeList<Entity>(TileList.Width * DefaultInitRowCount, allocator);
+            m_CaveGrid = caveGrid;
+            m_CaveTiles = caveTiles;
         }
-    
-        public static int2 WorldPosToGridPos(float2 worldPos) => 
-            (int2) math.round(worldPos+new float2(0.5f, -0.5f));
-        public static float2 SnapWorldPosToGridPos(float2 worldPos) => 
-            WorldPosToGridPos(worldPos) - new float2(0.5f, -0.5f);
 
-        public static int WorldPosToGridIndex(float2 worldPos)
+        public TileArray TileArray => m_CaveTiles.AsArray();
+        public GridArray GridArray => m_CaveGrid.AsArray();
+        
+        public int UnsafeGridLength
         {
-            var gridPos = WorldPosToGridPos(worldPos);
-            return gridPos.x + -gridPos.y * CaveGridWidth;
+            get => m_CaveGrid.GetRawUnsafe().Length;
+            set
+            {
+                var raw = m_CaveGrid.GetRawUnsafe();
+                raw.Length = value;
+            }
         }
         
-        public static (float2 pos, bool snappedToTile) SnapToTileOrGrid(float2 worldPos)
+        public int UnsafeTileLength
         {
-            var gridPos = SnapWorldPosToGridPos(worldPos);
-            var tilePos = math.round(worldPos);
-            var snappedToTile = math.distancesq(worldPos, tilePos) < math.distancesq(worldPos, gridPos);
-            return (math.select(gridPos, tilePos, snappedToTile), snappedToTile);
+            get => m_CaveTiles.GetRawUnsafe().Length;
+            set
+            {
+                var raw = m_CaveTiles.GetRawUnsafe();
+                raw.Length = value;
+            }
+        }
+        
+        public void UnsafeResizeGrid(int length, NativeArrayOptions options) 
+            => m_CaveGrid.GetRawUnsafe().Resize(length, options);
+        public void UnsafeResizeTile(int length, NativeArrayOptions options)
+            => m_CaveTiles.GetRawUnsafe().Resize(length, options);
+
+        public void Dispose()
+        {
+            m_CaveGrid.Dispose();
+            m_CaveTiles.Dispose();
         }
     }
 
@@ -116,29 +256,29 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        var caveGrid = new NativeList<CaveMaterialType>(Singleton.CaveGridWidth * 128, Allocator.Persistent);
-        var caveTiles = new NativeList<Entity>(Singleton.CaveTilesWidth * 127, Allocator.Persistent);
-        state.EntityManager.AddComponentData(state.SystemHandle, new Singleton { CaveGrid = caveGrid, CaveTiles = caveTiles});
-        caveGrid.Length = Singleton.CaveGridWidth * 128;
-        caveTiles.Resize(Singleton.CaveTilesWidth * 127, NativeArrayOptions.ClearMemory);
-        for (var i = 0; i < caveGrid.Length; i++)
+        var singleton = new Singleton(Allocator.Persistent);
+        state.EntityManager.AddComponentData(state.SystemHandle, singleton);
+        singleton.UnsafeGridLength = GridList.Width * Singleton.DefaultInitRowCount;
+        singleton.UnsafeResizeTile(TileList.Width * (Singleton.DefaultInitRowCount-1), NativeArrayOptions.ClearMemory);
+        var gridArray = singleton.GridArray;
+        for (var i = new IndexFor<GridArray>(0); i < singleton.GridArray.Length; i++)
         {
-            var x = i % Singleton.CaveGridWidth;
-            var y = i / Singleton.CaveGridWidth;
+            var x = i % GridList.Width;
+            var y = i / GridList.Width;
             
             // generate cave grid
             var water = math.select(0, (int)CaveMaterialType.Water, noise.cnoise(new float2(x, -y)*0.1f)>0.4f);     // water
             var ore = math.select(0, (int)CaveMaterialType.Ore, noise.cnoise(new float3(x, -y, 0.3f)*0.1f)>0.2f); // ore
             var air = math.select(0, (int)CaveMaterialType.Air, noise.cnoise(new float3(x, -y, 0.6f)*0.1f)>0.3f); // air
             air = math.max(air, y is 0 or 1 && x is 6 or 7 ? (int)CaveMaterialType.Air : (int)CaveMaterialType.Rock);       // cave entrance
-            caveGrid[i] = (CaveMaterialType) math.max(math.max(water, ore), air);
+            gridArray[i] = (CaveMaterialType) math.max(math.max(water, ore), air);
 
 #if DEBUG_DRAW_CAVE_GRID
             // Debug draw the cave grid
             Debug.DrawLine(
                 new float3(x, -y, 0), 
                 new float3(x, -y, 0) + math.forward(), 
-                Color.HSVToRGB((float)caveGrid[i]/4f,1,1), 
+                Color.HSVToRGB((float)gridArray[i]/4f,1,1), 
                 100f);
 #endif
         }
@@ -147,21 +287,19 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    {
-        SystemAPI.GetComponent<Singleton>(state.SystemHandle).CaveGrid.Dispose();
-    }
+    public void OnDestroy(ref SystemState state) 
+        => SystemAPI.GetComponent<Singleton>(state.SystemHandle).Dispose();
 
     // Spawn the tiles
     [BurstCompile]
     public void OnStartRunning(ref SystemState state)
     {
         var spriteTargetPrefab = SystemAPI.GetSingleton<MarchSquareData>().spriteTargetPrefab;
-        var caveGridHeight = SystemAPI.GetComponent<Singleton>(state.SystemHandle).GetCaveGridHeight();
+        var caveGridHeight = SystemAPI.GetComponent<Singleton>(state.SystemHandle).GridArray.GetHeight();
         
         for (var y = 0; y > -caveGridHeight + 1; y--)
         {
-            for (var x = 0; x < Singleton.CaveGridWidth - 1; x++)
+            for (var x = 0; x < GridList.Width - 1; x++)
             {
                 // spawn a sprite with the correct offset
                 var spriteTarget = state.EntityManager.Instantiate(spriteTargetPrefab);
@@ -175,12 +313,12 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
     public void OnUpdate(ref SystemState state)
     {
         var marchSquareSets = SystemAPI.GetSingletonBuffer<MarchSquareSet>();
-        var caveGrid = SystemAPI.GetComponent<Singleton>(state.SystemHandle).CaveGrid.AsArray();
+        var caveGrid = SystemAPI.GetComponent<Singleton>(state.SystemHandle).GridArray;
         
         // update outline tile
         foreach (var (lt, offsetXYScaleZwRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>>().WithAll<MarchingSquareTileCarverTag>())
         {
-            var corners = caveGrid.GetCornerValues((int2)lt.Position.xy);
+            var corners = caveGrid.GetCornerValues(CoordUtility.LocalToWorldToGridPos(lt));
 
             // build a 4-bit value from the 4 corners
             corners = 1 - (int4) math.saturate(corners);
@@ -191,7 +329,7 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
         // update mat A tile (the one with the highest corner)
         foreach (var (lt, offsetXYScaleZwRef, cornerStrengthRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>, RefRW<MaterialOverrideCornerStrength>>().WithAll<MarchingSquareTileMatATag>())
         {
-            var corners = caveGrid.GetCornerValues((int2)lt.Position.xy);
+            var corners = caveGrid.GetCornerValues(CoordUtility.LocalToWorldToGridPos(lt));
             var highestCorners = SortTheFourNumbers(corners);
             
             // build a 4-bit value from the 4 corners
@@ -203,7 +341,7 @@ public partial struct CaveGridSystem : ISystem, ISystemStartStop
         // update mat B tile (same as mat A, but with the second highest corner)
         foreach (var (lt, offsetXYScaleZwRef, cornerStrengthRef) in SystemAPI.Query<LocalToWorld, RefRW<MaterialOverrideOffsetXYScaleZW>, RefRW<MaterialOverrideCornerStrength>>().WithAll<MarchingSquareTileMatBTag>())
         {
-            var corners = caveGrid.GetCornerValues((int2)lt.Position.xy);
+            var corners = caveGrid.GetCornerValues(CoordUtility.LocalToWorldToGridPos(lt));
             var highestCorners = SortTheFourNumbers(corners);
             
             // get the second highest corner

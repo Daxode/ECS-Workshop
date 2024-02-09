@@ -76,7 +76,7 @@ partial struct CursorSystem : ISystem
         
         // Get mouse position in world and round to nearest grid cell 
         var mousePos = (float3) camera.ScreenToWorldPoint(Input.mousePosition);
-        var gridSnappedPos = CaveGridSystem.Singleton.SnapWorldPosToGridPos(mousePos.xy);
+        var gridSnappedPos = CoordUtility.SnapWorldPosToGridPos(mousePos.xy);
         var tileSnappedPos = math.round(mousePos.xy);
         
         // Setup cursor data
@@ -116,7 +116,7 @@ partial struct CursorSystem : ISystem
         // Check if mouse is on object
         if (cursorSelection.cursorToDraw.IsDestroy())
         {
-            var (snappedPos, _) = CaveGridSystem.Singleton.SnapToTileOrGrid(mousePos.xy);
+            var (snappedPos, _) = CoordUtility.SnapToTileOrGrid(mousePos.xy);
             
             // Check if mouse is on object
             if (math.distancesq(mousePos.xy, snappedPos) < 0.1f)

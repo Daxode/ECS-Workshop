@@ -243,9 +243,9 @@ static class NavigationExtensions
         public int gridCL, gridCC, gridCR;
         public int gridBL, gridBC, gridBR;
         
-        public static NavigationIndexes FromTilePos(int x, int y)
+        public static NavigationIndexes FromTilePos(Int2For<TileArray> tilePos)
         {
-            var gridIndex = (x * 2) + (-y * 2 * NavigationSystem.navWidth);
+            var gridIndex = (tilePos.X * 2) + (-tilePos.Y * 2 * NavigationSystem.navWidth);
             return new NavigationIndexes
             {
                 gridTL = gridIndex,
@@ -316,7 +316,7 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
         JumpUpDown,
     }
 
-    public const int navWidth = (CaveGridSystem.Singleton.CaveGridWidth * 2) - 1;
+    public const int navWidth = (GridArray.Width * 2) - 1;
     Pathfinder m_Pathfinder;
     
     public void OnCreate(ref SystemState state)
@@ -445,21 +445,22 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
     void UpdateNavigationGrid(ref SystemState state)
     {
         var caveSingleton = SystemAPI.GetSingleton<CaveGridSystem.Singleton>();
-        var caveTileHeight = caveSingleton.GetCaveTileHeight();
-        var corners = caveSingleton.CaveGrid.AsArray();
-        var tiles = caveSingleton.CaveTiles.AsArray();
+        var caveTileHeight = caveSingleton.TileArray.GetCaveTileHeight();
+        var corners = caveSingleton.GridArray;
+        var tiles = caveSingleton.TileArray;
         for (var tileY = 0; tileY > -caveTileHeight; tileY--)
         {
-            for (var tileX = 0; tileX < CaveGridSystem.Singleton.CaveTilesWidth; tileX++)
+            for (var tileX = 0; tileX < TileList.Width; tileX++)
             {
-                var cornerIndex = tileX + (-tileY * CaveGridSystem.Singleton.CaveGridWidth);
+                var gridPos = new Int2For<GridArray>(tileX, tileY);
+                var cornerIndex = gridPos.GetIndex();
                 var tl = corners[cornerIndex] == CaveMaterialType.Air ? 0 : 1;
-                var tr = corners[cornerIndex + 1] == CaveMaterialType.Air ? 0 : 1;
-                var bl = corners[cornerIndex + CaveGridSystem.Singleton.CaveGridWidth] == CaveMaterialType.Air ? 0 : 1;
-                var br = corners[cornerIndex + CaveGridSystem.Singleton.CaveGridWidth + 1] == CaveMaterialType.Air ? 0 : 1;
+                var tr = corners[cornerIndex.GoRight()] == CaveMaterialType.Air ? 0 : 1;
+                var bl = corners[cornerIndex.GoDown()] == CaveMaterialType.Air ? 0 : 1;
+                var br = corners[cornerIndex.GoDown().GoRight()] == CaveMaterialType.Air ? 0 : 1;
                 var marchSquareIndex = bl | (br << 1) | (tr << 2) | (tl << 3);
                 
-                var navIndexes = NavigationExtensions.NavigationIndexes.FromTilePos(tileX, tileY);
+                var navIndexes = NavigationExtensions.NavigationIndexes.FromTilePos(new Int2For<TileArray>(tileX, tileY));
                 // Switch on the 4 corners of the square to select where ground is
                 switch (marchSquareIndex)
                 {
@@ -565,10 +566,11 @@ public partial struct NavigationSystem : ISystem, ISystemStartStop
         
         for (var tileY = 0; tileY > -caveTileHeight; tileY--)
         {
-            for (var tileX = 0; tileX < CaveGridSystem.Singleton.CaveTilesWidth; tileX++)
+            for (var tileX = 0; tileX < TileArray.Width; tileX++)
             {
-                var navIndexes = NavigationExtensions.NavigationIndexes.FromTilePos(tileX, tileY);
-                var tileEntity = tiles[tileX + (-tileY * CaveGridSystem.Singleton.CaveTilesWidth)];
+                var tilePos = new Int2For<TileArray>(tileX, tileY);
+                var navIndexes = NavigationExtensions.NavigationIndexes.FromTilePos(tilePos);
+                var tileEntity = tiles[tilePos.GetIndex()];
                 if (tileEntity != Entity.Null && !SystemAPI.HasComponent<ConstructionSite>(tileEntity))
                     m_NavigationGrid.SetNavigation(ref navIndexes,
                         NodeType.Air, NodeType.JumpDown, NodeType.Air,

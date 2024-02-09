@@ -24,8 +24,8 @@ partial struct GameInputSystem : ISystem
         var camera = Camera.main;
         if (camera == null) return;
         var caveSystem = SystemAPI.GetSingletonRW<CaveGridSystem.Singleton>().ValueRW;
-        var caveGrid = caveSystem.CaveGrid.AsArray();
-        var caveTiles = caveSystem.CaveTiles.AsArray();
+        var caveGrid = caveSystem.GridArray;
+        var caveTiles = caveSystem.TileArray;
 
         var constructionSites = SystemAPI.GetSingletonBuffer<ConstructionSiteElement>();
 
@@ -39,11 +39,11 @@ partial struct GameInputSystem : ISystem
         {
             // Get the tile index
             float3 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
-            var tileIndex = CaveGridSystem.Singleton.WorldPosToTileIndex(mousePos.xy);
+            var tileIndex = CoordUtility.WorldPosToTileIndex(mousePos.xy);
 
             if (tileIndex >= 0 && tileIndex < caveTiles.Length && caveTiles[tileIndex] == Entity.Null) {
                 // check if valid
-                var corners = caveGrid.GetCornerValues((int2)(math.round(mousePos.xy)));
+                var corners = caveGrid.GetCornerValues(CoordUtility.WorldPosToGridPos(mousePos.xy));
                 corners = 1 - (int4)math.saturate(corners);
                 var marchSetIndex = corners.x | (corners.y << 1) | (corners.z << 2) | (corners.w << 3);
                 if ((marchSetIndex == 3 && cursorToDraw is CursorSelection.CursorToDraw.StockpileOutline or CursorSelection.CursorToDraw.WorkshopOutline) 
@@ -65,11 +65,11 @@ partial struct GameInputSystem : ISystem
         {
             // Get the grid index
             float3 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
-            var (snappedPos, snappedToTile) = CaveGridSystem.Singleton.SnapToTileOrGrid(mousePos.xy);
+            var (snappedPos, snappedToTile) = CoordUtility.SnapToTileOrGrid(mousePos.xy);
 
             if (snappedToTile)
             {
-                var tileIndex = CaveGridSystem.Singleton.WorldPosToTileIndex(snappedPos);
+                var tileIndex = CoordUtility.WorldPosToTileIndex(snappedPos);
                 if (tileIndex >= 0 && tileIndex < caveTiles.Length && caveTiles[tileIndex] != Entity.Null) {
                     if (SystemAPI.HasComponent<ConstructionSite>(caveTiles[tileIndex]))
                     {
@@ -80,12 +80,12 @@ partial struct GameInputSystem : ISystem
             }
             else
             {
-                var gridIndex = CaveGridSystem.Singleton.WorldPosToGridIndex(snappedPos);
+                var gridIndex = CoordUtility.WorldPosToGridIndex(snappedPos);
                 if (gridIndex >= 0 && gridIndex < caveGrid.Length && caveGrid[gridIndex] != CaveMaterialType.Air) {
                     var gridLockPrefab = SystemAPI.GetSingleton<MarchSquareData>().gridLockPrefab;
                     var gridLockEntity = state.EntityManager.Instantiate(gridLockPrefab);
                     SystemAPI.SetComponent(gridLockEntity, 
-                        LocalTransform.FromPosition(new float3(CaveGridSystem.Singleton.SnapWorldPosToGridPos(mousePos.xy), -2)));
+                        LocalTransform.FromPosition(new float3(CoordUtility.SnapWorldPosToGridPos(mousePos.xy), -2)));
                 }
             }
 
@@ -119,7 +119,7 @@ partial struct GameInputSystem : ISystem
         if ((Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1)) && cursorToDraw.IsDrawn())
         {
             float3 mousePos = camera.ScreenToWorldPoint(Input.mousePosition);
-            var i = CaveGridSystem.Singleton.WorldPosToGridIndex(mousePos.xy);
+            var i = CoordUtility.WorldPosToGridIndex(mousePos.xy);
             if (i >= 0 && i < caveGrid.Length)
             {
                 if (Input.GetKey(KeyCode.LeftShift))

@@ -21,7 +21,7 @@ public partial struct ConstructionSystem : ISystem
     {
         //Get the caveTiles for positioning
         var caveSystem = SystemAPI.GetSingletonRW<CaveGridSystem.Singleton>().ValueRW;
-        var caveTiles = caveSystem.CaveTiles.AsArray();
+        var caveTiles = caveSystem.TileArray;
         
         //ECB for destruction
         var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
@@ -37,7 +37,7 @@ public partial struct ConstructionSystem : ISystem
                     SystemAPI.SetComponent(buildingEntity, LocalTransform.FromPosition(localToWorld.Position));
                     
                     //Get tileIndex for caveTiles
-                    var tileIndex = CaveGridSystem.Singleton.WorldPosToTileIndex(localToWorld.Position.xy);
+                    var tileIndex = CoordUtility.WorldPosToTileIndex(localToWorld.Position.xy);
             
                     //Destroy the construction  (Maybe use cleanup system)
                     ecb.DestroyEntity(caveTiles[tileIndex]);
